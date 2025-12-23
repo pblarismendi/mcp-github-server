@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "node",
+      "args": ["/Users/parismendi/Documents/mcp-github/dist/index.js"],
+      "env": {
+        "GITHUB_TOKEN": "tu_token_aqui"
+      }
+    }
+  }
+}
+
