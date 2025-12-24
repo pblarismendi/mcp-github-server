@@ -8,8 +8,7 @@ vi.mock('dotenv', () => ({
 }));
 
 // Mock de process.exit para evitar que los tests terminen
-const originalExit = process.exit;
-vi.spyOn(process, 'exit').mockImplementation((code?: number) => {
+vi.spyOn(process, 'exit').mockImplementation((code?: string | number | null) => {
   throw new Error(`process.exit(${code}) was called`);
 });
 

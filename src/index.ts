@@ -293,6 +293,154 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "search_code",
+        description: "Busca código en repositorios de GitHub. Permite encontrar archivos, funciones, clases, etc.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Query de búsqueda (ej: 'function calculateTotal repo:owner/repo', 'TODO language:typescript')",
+            },
+            sort: {
+              type: "string",
+              enum: ["indexed"],
+              description: "Ordenar por fecha de indexación (solo 'indexed' está disponible)",
+              default: "indexed",
+            },
+            order: {
+              type: "string",
+              enum: ["desc", "asc"],
+              description: "Dirección del ordenamiento",
+              default: "desc",
+            },
+            per_page: {
+              type: "number",
+              default: 30,
+              minimum: 1,
+              maximum: 100,
+            },
+            page: {
+              type: "number",
+              default: 1,
+              minimum: 1,
+            },
+          },
+          required: ["query"],
+        },
+      },
+      {
+        name: "search_issues",
+        description: "Búsqueda avanzada de issues y pull requests en GitHub",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Query de búsqueda (ej: 'is:issue is:open label:bug repo:owner/repo', 'author:username is:pr')",
+            },
+            sort: {
+              type: "string",
+              enum: ["comments", "reactions", "reactions-+1", "reactions--1", "reactions-smile", "reactions-thinking_face", "reactions-heart", "reactions-tada", "interactions", "created", "updated"],
+              description: "Campo por el cual ordenar",
+              default: "updated",
+            },
+            order: {
+              type: "string",
+              enum: ["desc", "asc"],
+              description: "Dirección del ordenamiento",
+              default: "desc",
+            },
+            per_page: {
+              type: "number",
+              default: 30,
+              minimum: 1,
+              maximum: 100,
+            },
+            page: {
+              type: "number",
+              default: 1,
+              minimum: 1,
+            },
+          },
+          required: ["query"],
+        },
+      },
+      {
+        name: "search_users",
+        description: "Busca usuarios en GitHub por nombre, email, ubicación, etc.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Query de búsqueda (ej: 'location:argentina language:typescript', 'followers:>100')",
+            },
+            sort: {
+              type: "string",
+              enum: ["followers", "repositories", "joined"],
+              description: "Campo por el cual ordenar",
+              default: "followers",
+            },
+            order: {
+              type: "string",
+              enum: ["desc", "asc"],
+              description: "Dirección del ordenamiento",
+              default: "desc",
+            },
+            per_page: {
+              type: "number",
+              default: 30,
+              minimum: 1,
+              maximum: 100,
+            },
+            page: {
+              type: "number",
+              default: 1,
+              minimum: 1,
+            },
+          },
+          required: ["query"],
+        },
+      },
+      {
+        name: "search_commits",
+        description: "Busca commits en GitHub por mensaje, autor, fecha, etc.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Query de búsqueda (ej: 'author:username repo:owner/repo', 'fix bug in:message')",
+            },
+            sort: {
+              type: "string",
+              enum: ["author-date", "committer-date"],
+              description: "Campo por el cual ordenar",
+              default: "committer-date",
+            },
+            order: {
+              type: "string",
+              enum: ["desc", "asc"],
+              description: "Dirección del ordenamiento",
+              default: "desc",
+            },
+            per_page: {
+              type: "number",
+              default: 30,
+              minimum: 1,
+              maximum: 100,
+            },
+            page: {
+              type: "number",
+              default: 1,
+              minimum: 1,
+            },
+          },
+          required: ["query"],
+        },
+      },
+      {
         name: "get_user_info",
         description: "Obtiene información del usuario autenticado",
         inputSchema: {
@@ -1025,6 +1173,242 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   total_count: response.data.total_count,
                   page,
                   repositories: repos,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "search_code": {
+        const {
+          query,
+          sort = "indexed",
+          order = "desc",
+          per_page = 30,
+          page = 1,
+        } = args as any;
+
+        const response = await octokit.search.code({
+          q: query,
+          sort: sort as "indexed",
+          order: order as "desc" | "asc",
+          per_page: Math.min(per_page, 100),
+          page,
+        });
+
+        const codeResults = response.data.items.map((item) => ({
+          name: item.name,
+          path: item.path,
+          sha: item.sha,
+          url: item.html_url,
+          git_url: item.git_url,
+          repository: {
+            id: item.repository.id,
+            name: item.repository.name,
+            full_name: item.repository.full_name,
+            owner: item.repository.owner?.login || null,
+            private: item.repository.private,
+            html_url: item.repository.html_url,
+          },
+          score: item.score,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  total_count: response.data.total_count,
+                  page,
+                  results: codeResults,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "search_issues": {
+        const {
+          query,
+          sort = "updated",
+          order = "desc",
+          per_page = 30,
+          page = 1,
+        } = args as any;
+
+        const response = await octokit.search.issuesAndPullRequests({
+          q: query,
+          sort: sort as
+            | "comments"
+            | "reactions"
+            | "reactions-+1"
+            | "reactions--1"
+            | "reactions-smile"
+            | "reactions-thinking_face"
+            | "reactions-heart"
+            | "reactions-tada"
+            | "interactions"
+            | "created"
+            | "updated",
+          order: order as "desc" | "asc",
+          per_page: Math.min(per_page, 100),
+          page,
+        });
+
+        const issues = response.data.items.map((item) => ({
+          number: item.number,
+          title: item.title,
+          body: item.body || "",
+          state: item.state,
+          user: item.user?.login || null,
+          labels: item.labels.map((label: any) => ({
+            name: label.name,
+            color: label.color,
+          })),
+          assignees: item.assignees?.map((a) => a.login) || [],
+          comments: item.comments,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          closed_at: item.closed_at,
+          html_url: item.html_url,
+          pull_request: item.pull_request ? true : false,
+          repository: item.repository_url
+            ? item.repository_url.split("/").slice(-2).join("/")
+            : null,
+          score: item.score,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  total_count: response.data.total_count,
+                  page,
+                  issues,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "search_users": {
+        const {
+          query,
+          sort = "followers",
+          order = "desc",
+          per_page = 30,
+          page = 1,
+        } = args as any;
+
+        const response = await octokit.search.users({
+          q: query,
+          sort: sort as "followers" | "repositories" | "joined",
+          order: order as "desc" | "asc",
+          per_page: Math.min(per_page, 100),
+          page,
+        });
+
+        const users = response.data.items.map((user) => ({
+          id: user.id,
+          login: user.login,
+          name: user.name || null,
+          bio: user.bio || null,
+          company: user.company || null,
+          blog: user.blog || null,
+          location: user.location || null,
+          email: user.email || null,
+          public_repos: user.public_repos,
+          followers: user.followers,
+          following: user.following,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+          html_url: user.html_url,
+          avatar_url: user.avatar_url,
+          score: user.score,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  total_count: response.data.total_count,
+                  page,
+                  users,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "search_commits": {
+        const {
+          query,
+          sort = "committer-date",
+          order = "desc",
+          per_page = 30,
+          page = 1,
+        } = args as any;
+
+        const response = await octokit.search.commits({
+          q: query,
+          sort: sort as "author-date" | "committer-date",
+          order: order as "desc" | "asc",
+          per_page: Math.min(per_page, 100),
+          page,
+        });
+
+        const commits = response.data.items.map((commit) => ({
+          sha: commit.sha,
+          message: commit.commit.message,
+          author: {
+            name: commit.commit.author?.name || null,
+            email: commit.commit.author?.email || null,
+            date: commit.commit.author?.date || null,
+            login: (commit as any).author?.login || null,
+          },
+          committer: {
+            name: commit.commit.committer?.name || null,
+            email: commit.commit.committer?.email || null,
+            date: commit.commit.committer?.date || null,
+            login: (commit as any).committer?.login || null,
+          },
+          url: commit.html_url,
+          repository: {
+            id: commit.repository.id,
+            name: commit.repository.name,
+            full_name: commit.repository.full_name,
+            owner: commit.repository.owner?.login || null,
+            html_url: commit.repository.html_url,
+          },
+          score: commit.score,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  total_count: response.data.total_count,
+                  page,
+                  commits,
                 },
                 null,
                 2

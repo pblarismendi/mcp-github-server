@@ -15,6 +15,12 @@ Un servidor completo de Model Context Protocol (MCP) para interactuar con GitHub
 - ✅ **Obtener información detallada** de repositorios específicos
 - ✅ **Buscar repositorios** en GitHub
 
+### Búsqueda Avanzada 🆕
+- ✅ **Buscar código** en repositorios (archivos, funciones, clases)
+- ✅ **Buscar issues y PRs** con filtros avanzados
+- ✅ **Buscar usuarios** por ubicación, lenguaje, seguidores, etc.
+- ✅ **Buscar commits** por mensaje, autor, fecha, etc.
+
 ### Issues
 - ✅ **Listar issues** con filtros avanzados
 - ✅ **Crear issues** con labels y asignados
@@ -514,6 +520,118 @@ Busca repositorios en GitHub.
 - `order` (opcional): `"desc"`, `"asc"` (default: `"desc"`)
 - `per_page` (opcional): número de resultados (default: 30)
 - `page` (opcional): número de página (default: 1)
+
+### `search_code` 🆕
+Busca código en repositorios de GitHub. Permite encontrar archivos, funciones, clases, etc.
+
+**Parámetros:**
+- `query` (requerido): query de búsqueda (ej: `"function calculateTotal repo:owner/repo"`, `"TODO language:typescript"`)
+- `sort` (opcional): `"indexed"` (solo opción disponible, default: `"indexed"`)
+- `order` (opcional): `"desc"`, `"asc"` (default: `"desc"`)
+- `per_page` (opcional): número de resultados (default: 30)
+- `page` (opcional): número de página (default: 1)
+
+**Ejemplos de queries:**
+- `"function calculateTotal repo:owner/repo"` - Buscar función en un repo específico
+- `"TODO language:typescript"` - Buscar TODOs en código TypeScript
+- `"class User"` - Buscar clases llamadas User
+- `"import React from"` - Buscar imports específicos
+
+**Ejemplo:**
+```json
+{
+  "name": "search_code",
+  "arguments": {
+    "query": "function calculateTotal repo:pblarismendi/mcp-github-server",
+    "per_page": 50
+  }
+}
+```
+
+### `search_issues` 🆕
+Búsqueda avanzada de issues y pull requests en GitHub.
+
+**Parámetros:**
+- `query` (requerido): query de búsqueda (ej: `"is:issue is:open label:bug repo:owner/repo"`, `"author:username is:pr"`)
+- `sort` (opcional): Campo por el cual ordenar
+  - `"comments"`, `"reactions"`, `"reactions-+1"`, `"reactions--1"`, `"reactions-smile"`, `"reactions-thinking_face"`, `"reactions-heart"`, `"reactions-tada"`, `"interactions"`, `"created"`, `"updated"` (default: `"updated"`)
+- `order` (opcional): `"desc"`, `"asc"` (default: `"desc"`)
+- `per_page` (opcional): número de resultados (default: 30)
+- `page` (opcional): número de página (default: 1)
+
+**Ejemplos de queries:**
+- `"is:issue is:open label:bug"` - Issues abiertos con label bug
+- `"is:pr author:username"` - Pull requests de un usuario
+- `"repo:owner/repo is:issue state:closed"` - Issues cerrados en un repo
+- `"label:enhancement language:typescript"` - Issues con label enhancement en repos TypeScript
+
+**Ejemplo:**
+```json
+{
+  "name": "search_issues",
+  "arguments": {
+    "query": "is:issue is:open label:bug repo:alegradev/mcp-github-server",
+    "sort": "updated",
+    "per_page": 50
+  }
+}
+```
+
+### `search_users` 🆕
+Busca usuarios en GitHub por nombre, email, ubicación, etc.
+
+**Parámetros:**
+- `query` (requerido): query de búsqueda (ej: `"location:argentina language:typescript"`, `"followers:>100"`)
+- `sort` (opcional): `"followers"`, `"repositories"`, `"joined"` (default: `"followers"`)
+- `order` (opcional): `"desc"`, `"asc"` (default: `"desc"`)
+- `per_page` (opcional): número de resultados (default: 30)
+- `page` (opcional): número de página (default: 1)
+
+**Ejemplos de queries:**
+- `"location:argentina"` - Usuarios de Argentina
+- `"language:typescript followers:>100"` - Usuarios que usan TypeScript con más de 100 seguidores
+- `"type:org"` - Solo organizaciones
+- `"repos:>10"` - Usuarios con más de 10 repositorios
+
+**Ejemplo:**
+```json
+{
+  "name": "search_users",
+  "arguments": {
+    "query": "location:argentina language:typescript",
+    "sort": "followers",
+    "per_page": 20
+  }
+}
+```
+
+### `search_commits` 🆕
+Busca commits en GitHub por mensaje, autor, fecha, etc.
+
+**Parámetros:**
+- `query` (requerido): query de búsqueda (ej: `"author:username repo:owner/repo"`, `"fix bug in:message"`)
+- `sort` (opcional): `"author-date"`, `"committer-date"` (default: `"committer-date"`)
+- `order` (opcional): `"desc"`, `"asc"` (default: `"desc"`)
+- `per_page` (opcional): número de resultados (default: 30)
+- `page` (opcional): número de página (default: 1)
+
+**Ejemplos de queries:**
+- `"author:username repo:owner/repo"` - Commits de un usuario en un repo
+- `"fix bug in:message"` - Commits con "fix bug" en el mensaje
+- `"repo:owner/repo merge:false"` - Commits que no son merges
+- `"author-date:>2024-01-01"` - Commits después de una fecha
+
+**Ejemplo:**
+```json
+{
+  "name": "search_commits",
+  "arguments": {
+    "query": "author:pblarismendi repo:alegradev/mcp-github-server",
+    "sort": "committer-date",
+    "per_page": 50
+  }
+}
+```
 
 ### `get_user_info`
 Obtiene información del usuario autenticado.
