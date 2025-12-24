@@ -336,6 +336,217 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["owner", "repo", "title"],
         },
       },
+      {
+        name: "create_pull_request",
+        description: "Crea un nuevo pull request en un repositorio",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            title: {
+              type: "string",
+              description: "Título del pull request",
+            },
+            body: {
+              type: "string",
+              description: "Cuerpo del pull request en Markdown",
+            },
+            head: {
+              type: "string",
+              description: "Branch de origen (branch que contiene los cambios)",
+            },
+            base: {
+              type: "string",
+              description: "Branch de destino (branch donde se mergeará)",
+            },
+            draft: {
+              type: "boolean",
+              description: "Si es true, crea el PR como draft",
+              default: false,
+            },
+          },
+          required: ["owner", "repo", "title", "head", "base"],
+        },
+      },
+      {
+        name: "get_pull_request",
+        description: "Obtiene información detallada de un pull request específico",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            pull_number: {
+              type: "number",
+              description: "Número del pull request",
+            },
+          },
+          required: ["owner", "repo", "pull_number"],
+        },
+      },
+      {
+        name: "merge_pull_request",
+        description: "Mergea un pull request. Soporta merge, squash y rebase",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            pull_number: {
+              type: "number",
+              description: "Número del pull request",
+            },
+            merge_method: {
+              type: "string",
+              enum: ["merge", "squash", "rebase"],
+              description: "Método de merge: merge (crea merge commit), squash (combina en un commit), rebase (rebase linear)",
+              default: "merge",
+            },
+            commit_title: {
+              type: "string",
+              description: "Título del commit de merge (opcional)",
+            },
+            commit_message: {
+              type: "string",
+              description: "Mensaje del commit de merge (opcional)",
+            },
+          },
+          required: ["owner", "repo", "pull_number"],
+        },
+      },
+      {
+        name: "close_pull_request",
+        description: "Cierra un pull request sin mergearlo",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            pull_number: {
+              type: "number",
+              description: "Número del pull request",
+            },
+          },
+          required: ["owner", "repo", "pull_number"],
+        },
+      },
+      {
+        name: "update_pull_request",
+        description: "Actualiza el título, descripción o estado de un pull request",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            pull_number: {
+              type: "number",
+              description: "Número del pull request",
+            },
+            title: {
+              type: "string",
+              description: "Nuevo título del pull request",
+            },
+            body: {
+              type: "string",
+              description: "Nueva descripción del pull request en Markdown",
+            },
+            state: {
+              type: "string",
+              enum: ["open", "closed"],
+              description: "Estado del pull request",
+            },
+            base: {
+              type: "string",
+              description: "Cambiar el branch base del pull request",
+            },
+          },
+          required: ["owner", "repo", "pull_number"],
+        },
+      },
+      {
+        name: "add_pull_request_review",
+        description: "Agrega una review (aprobación, cambios solicitados, comentario) a un pull request",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            pull_number: {
+              type: "number",
+              description: "Número del pull request",
+            },
+            event: {
+              type: "string",
+              enum: ["APPROVE", "REQUEST_CHANGES", "COMMENT"],
+              description: "Tipo de review: APPROVE (aprobado), REQUEST_CHANGES (cambios solicitados), COMMENT (solo comentario)",
+            },
+            body: {
+              type: "string",
+              description: "Comentario de la review en Markdown",
+            },
+          },
+          required: ["owner", "repo", "pull_number", "event"],
+        },
+      },
+      {
+        name: "list_pull_request_reviews",
+        description: "Lista todas las reviews de un pull request",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            pull_number: {
+              type: "number",
+              description: "Número del pull request",
+            },
+          },
+          required: ["owner", "repo", "pull_number"],
+        },
+      },
     ],
   };
 });
@@ -889,6 +1100,324 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   state: response.data.state,
                   html_url: response.data.html_url,
                   created_at: response.data.created_at,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "create_pull_request": {
+        const {
+          owner,
+          repo,
+          title,
+          body,
+          head,
+          base,
+          draft = false,
+        } = args as any;
+
+        const params: any = {
+          owner,
+          repo,
+          title,
+          head,
+          base,
+        };
+
+        if (body) params.body = body;
+        if (draft) params.draft = draft;
+
+        const response = await octokit.pulls.create(params);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  number: response.data.number,
+                  title: response.data.title,
+                  state: response.data.state,
+                  draft: response.data.draft,
+                  user: response.data.user?.login || null,
+                  head: {
+                    ref: response.data.head.ref,
+                    sha: response.data.head.sha,
+                  },
+                  base: {
+                    ref: response.data.base.ref,
+                    sha: response.data.base.sha,
+                  },
+                  html_url: response.data.html_url,
+                  created_at: response.data.created_at,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "get_pull_request": {
+        const { owner, repo, pull_number } = args as {
+          owner: string;
+          repo: string;
+          pull_number: number;
+        };
+
+        const response = await octokit.pulls.get({
+          owner,
+          repo,
+          pull_number,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  number: response.data.number,
+                  title: response.data.title,
+                  body: response.data.body || "",
+                  state: response.data.state,
+                  draft: response.data.draft,
+                  merged: response.data.merged,
+                  mergeable: response.data.mergeable,
+                  mergeable_state: response.data.mergeable_state,
+                  user: response.data.user?.login || null,
+                  head: {
+                    ref: response.data.head.ref,
+                    sha: response.data.head.sha,
+                    repo: response.data.head.repo?.full_name,
+                  },
+                  base: {
+                    ref: response.data.base.ref,
+                    sha: response.data.base.sha,
+                    repo: response.data.base.repo?.full_name,
+                  },
+                  comments: response.data.comments,
+                  review_comments: response.data.review_comments,
+                  commits: response.data.commits,
+                  additions: response.data.additions,
+                  deletions: response.data.deletions,
+                  changed_files: response.data.changed_files,
+                  created_at: response.data.created_at,
+                  updated_at: response.data.updated_at,
+                  closed_at: response.data.closed_at,
+                  merged_at: response.data.merged_at,
+                  html_url: response.data.html_url,
+                  diff_url: response.data.diff_url,
+                  patch_url: response.data.patch_url,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "merge_pull_request": {
+        const {
+          owner,
+          repo,
+          pull_number,
+          merge_method = "merge",
+          commit_title,
+          commit_message,
+        } = args as any;
+
+        const params: any = {
+          owner,
+          repo,
+          pull_number,
+          merge_method: merge_method as "merge" | "squash" | "rebase",
+        };
+
+        if (commit_title) params.commit_title = commit_title;
+        if (commit_message) params.commit_message = commit_message;
+
+        const response = await octokit.pulls.merge(params);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  merged: response.data.merged,
+                  message: response.data.message,
+                  sha: response.data.sha,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "close_pull_request": {
+        const { owner, repo, pull_number } = args as {
+          owner: string;
+          repo: string;
+          pull_number: number;
+        };
+
+        const response = await octokit.pulls.update({
+          owner,
+          repo,
+          pull_number,
+          state: "closed",
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  number: response.data.number,
+                  title: response.data.title,
+                  state: response.data.state,
+                  closed_at: response.data.closed_at,
+                  html_url: response.data.html_url,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "update_pull_request": {
+        const {
+          owner,
+          repo,
+          pull_number,
+          title,
+          body,
+          state,
+          base,
+        } = args as any;
+
+        const params: any = {
+          owner,
+          repo,
+          pull_number,
+        };
+
+        if (title) params.title = title;
+        if (body !== undefined) params.body = body;
+        if (state) params.state = state as "open" | "closed";
+        if (base) params.base = base;
+
+        const response = await octokit.pulls.update(params);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  number: response.data.number,
+                  title: response.data.title,
+                  body: response.data.body || "",
+                  state: response.data.state,
+                  draft: response.data.draft,
+                  base: {
+                    ref: response.data.base.ref,
+                    sha: response.data.base.sha,
+                  },
+                  html_url: response.data.html_url,
+                  updated_at: response.data.updated_at,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "add_pull_request_review": {
+        const {
+          owner,
+          repo,
+          pull_number,
+          event,
+          body,
+        } = args as any;
+
+        const params: any = {
+          owner,
+          repo,
+          pull_number,
+          event: event as "APPROVE" | "REQUEST_CHANGES" | "COMMENT",
+        };
+
+        if (body) params.body = body;
+
+        const response = await octokit.pulls.createReview(params);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  id: response.data.id,
+                  state: response.data.state,
+                  body: response.data.body || "",
+                  user: response.data.user?.login || null,
+                  submitted_at: response.data.submitted_at,
+                  html_url: response.data.html_url,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "list_pull_request_reviews": {
+        const { owner, repo, pull_number } = args as {
+          owner: string;
+          repo: string;
+          pull_number: number;
+        };
+
+        const response = await octokit.pulls.listReviews({
+          owner,
+          repo,
+          pull_number,
+        });
+
+        const reviews = response.data.map((review) => ({
+          id: review.id,
+          state: review.state,
+          body: review.body || "",
+          user: review.user?.login || null,
+          submitted_at: review.submitted_at,
+          html_url: review.html_url,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  total: reviews.length,
+                  reviews,
                 },
                 null,
                 2

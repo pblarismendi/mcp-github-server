@@ -10,14 +10,33 @@ Un servidor completo de Model Context Protocol (MCP) para interactuar con GitHub
 
 ## ✨ Características
 
+### Repositorios
 - ✅ **Listar repositorios** (públicos y privados) con filtros avanzados
 - ✅ **Obtener información detallada** de repositorios específicos
-- ✅ **Gestionar issues** (listar, crear, filtrar)
-- ✅ **Gestionar pull requests** (listar, filtrar por estado)
+- ✅ **Buscar repositorios** en GitHub
+
+### Issues
+- ✅ **Listar issues** con filtros avanzados
+- ✅ **Crear issues** con labels y asignados
+
+### Pull Requests (Gestión Completa) 🆕
+- ✅ **Listar pull requests** con filtros
+- ✅ **Crear pull requests** (incluyendo drafts)
+- ✅ **Obtener detalles completos** de un PR
+- ✅ **Mergear pull requests** (merge, squash, rebase)
+- ✅ **Cerrar pull requests** sin mergear
+- ✅ **Actualizar pull requests** (título, descripción, estado, base)
+- ✅ **Agregar reviews** (aprobar, solicitar cambios, comentar)
+- ✅ **Listar reviews** de un pull request
+
+### Git y Branches
 - ✅ **Listar branches** de repositorios
 - ✅ **Leer contenido de archivos** y directorios
-- ✅ **Buscar repositorios** en GitHub
+
+### Usuario
 - ✅ **Obtener información del usuario** autenticado
+
+### Recursos MCP
 - ✅ **Recursos MCP** para acceso rápido a datos comunes
 
 ## 📋 Requisitos Previos
@@ -315,6 +334,129 @@ Lista los pull requests de un repositorio.
 - `base` (opcional): filtrar por branch de destino
 - `per_page` (opcional): número de resultados (default: 30)
 - `page` (opcional): número de página (default: 1)
+
+### `create_pull_request` 🆕
+Crea un nuevo pull request en un repositorio.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `title` (requerido): título del pull request
+- `head` (requerido): branch de origen (branch que contiene los cambios)
+- `base` (requerido): branch de destino (branch donde se mergeará)
+- `body` (opcional): cuerpo del pull request en Markdown
+- `draft` (opcional): si es `true`, crea el PR como draft (default: `false`)
+
+**Ejemplo:**
+```json
+{
+  "name": "create_pull_request",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "title": "Agregar gestión completa de PRs",
+    "head": "feature/pr-management",
+    "base": "main",
+    "body": "Esta PR agrega funcionalidades completas para gestionar PRs",
+    "draft": false
+  }
+}
+```
+
+### `get_pull_request` 🆕
+Obtiene información detallada de un pull request específico.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `pull_number` (requerido): número del pull request
+
+**Retorna:** Información completa incluyendo estado de merge, estadísticas (commits, cambios, archivos), y más.
+
+### `merge_pull_request` 🆕
+Mergea un pull request. Soporta tres métodos de merge.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `pull_number` (requerido): número del pull request
+- `merge_method` (opcional): método de merge
+  - `"merge"` (default): crea un merge commit
+  - `"squash"`: combina todos los commits en uno solo
+  - `"rebase"`: hace rebase linear
+- `commit_title` (opcional): título personalizado para el commit de merge
+- `commit_message` (opcional): mensaje personalizado para el commit de merge
+
+**Ejemplo:**
+```json
+{
+  "name": "merge_pull_request",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "pull_number": 123,
+    "merge_method": "squash",
+    "commit_title": "Merge PR #123: Agregar gestión de PRs"
+  }
+}
+```
+
+### `close_pull_request` 🆕
+Cierra un pull request sin mergearlo.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `pull_number` (requerido): número del pull request
+
+### `update_pull_request` 🆕
+Actualiza el título, descripción, estado o branch base de un pull request.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `pull_number` (requerido): número del pull request
+- `title` (opcional): nuevo título del pull request
+- `body` (opcional): nueva descripción en Markdown
+- `state` (opcional): `"open"` o `"closed"`
+- `base` (opcional): cambiar el branch base del pull request
+
+### `add_pull_request_review` 🆕
+Agrega una review (aprobación, cambios solicitados, o comentario) a un pull request.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `pull_number` (requerido): número del pull request
+- `event` (requerido): tipo de review
+  - `"APPROVE"`: aprueba el pull request
+  - `"REQUEST_CHANGES"`: solicita cambios
+  - `"COMMENT"`: solo agrega un comentario
+- `body` (opcional): comentario de la review en Markdown
+
+**Ejemplo:**
+```json
+{
+  "name": "add_pull_request_review",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "pull_number": 123,
+    "event": "APPROVE",
+    "body": "¡Excelente trabajo! El código se ve bien."
+  }
+}
+```
+
+### `list_pull_request_reviews` 🆕
+Lista todas las reviews de un pull request.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `pull_number` (requerido): número del pull request
+
+**Retorna:** Lista de todas las reviews con su estado, autor y comentarios.
 
 ### `list_branches`
 Lista las ramas de un repositorio.
