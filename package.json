@@ -37,6 +37,20 @@
     "url": "https://github.com/pblarismendi"
   },
   "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pblarismendi/mcp-github-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pblarismendi/mcp-github-server/issues"
+  },
+  "homepage": "https://github.com/pblarismendi/mcp-github-server#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.5.0",
     "@octokit/rest": "^20.0.2",

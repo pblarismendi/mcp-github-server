@@ -1,0 +1,55 @@
+# Source files
+src/
+*.ts
+!*.d.ts
+
+# Tests
+**/__tests__/
+**/*.test.ts
+**/*.spec.ts
+*.test.*
+*.spec.*
+
+# Config files
+tsconfig.json
+vitest.config.ts
+*.config.*
+
+# Development files
+.env
+.env.example
+*.log
+.DS_Store
+*.tsbuildinfo
+
+# Coverage
+coverage/
+.vitest/
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Documentation (except README.md)
+*.md
+!README.md
+
+# Scripts
+*.sh
+*.ps1
+
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+
+# Build artifacts (solo incluimos dist/)
+*.map
+
+# Temporary files
+*.tmp
+*.temp
+
