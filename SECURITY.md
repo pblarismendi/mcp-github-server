@@ -42,9 +42,15 @@ La protección de ramas está configurada con:
 - ✅ No permite force pushes
 - ✅ No permite eliminar la rama
 
+**Auto-aprobación para el dueño del repositorio:**
+- El workflow `.github/workflows/auto-approve.yml` auto-aprueba automáticamente los PRs creados por el dueño del repositorio
+- Esto permite que el dueño pueda mergear sus propios PRs sin esperar aprobación externa
+- Los PRs de otros colaboradores siguen requiriendo aprobación manual del dueño
+- El workflow usa el token `GITHUB_TOKEN` de GitHub Actions para aprobar PRs
+
 Esto significa que **incluso si alguien modifica un script**, necesitará:
 1. Crear un PR
-2. Obtener tu aprobación
+2. Obtener tu aprobación (o auto-aprobación si eres el dueño)
 3. Mergear el PR
 
 **Pero siempre revisa cuidadosamente los PRs que modifican scripts de seguridad o configuración.**

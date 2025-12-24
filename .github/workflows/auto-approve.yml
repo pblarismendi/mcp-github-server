@@ -1,0 +1,43 @@
+name: Auto-approve PRs from repository owner
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  auto-approve:
+    name: Auto-approve PRs from owner
+    runs-on: ubuntu-latest
+    # Solo ejecutar si el PR es del dueño del repositorio
+    if: github.event.pull_request.user.login == github.repository_owner
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Auto-approve PR
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo, number } = context.issue;
+            const prAuthor = context.payload.pull_request.user.login;
+            const repoOwner = context.repo.owner;
+            
+            // Solo auto-aprobar si el autor es el dueño del repositorio
+            if (prAuthor === repoOwner) {
+              console.log(`Auto-aprobando PR #${number} del dueño del repositorio (${prAuthor})`);
+              
+              await github.rest.pulls.createReview({
+                owner,
+                repo,
+                pull_number: number,
+                event: 'APPROVE',
+                body: '✅ **Auto-aprobado**: Este PR fue creado por el dueño del repositorio y cumple con los requisitos de calidad.'
+              });
+              
+              console.log(`✅ PR #${number} auto-aprobado exitosamente`);
+            } else {
+              console.log(`⏭️  Saltando auto-aprobación: El PR #${number} fue creado por ${prAuthor}, no por el dueño (${repoOwner})`);
+            }
+

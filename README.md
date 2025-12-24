@@ -209,9 +209,11 @@ npm run test:coverage
 
 ## 🔄 CI/CD con GitHub Actions
 
-El proyecto incluye un workflow de GitHub Actions que ejecuta automáticamente los tests en cada Pull Request hacia `main`.
+El proyecto incluye workflows de GitHub Actions para automatizar el proceso de desarrollo.
 
-**Workflow:** `.github/workflows/tests.yml`
+### Workflow de Tests
+
+**Archivo:** `.github/workflows/tests.yml`
 
 **Qué hace:**
 - ✅ Ejecuta tests unitarios automáticamente en cada PR
@@ -224,9 +226,23 @@ El proyecto incluye un workflow de GitHub Actions que ejecuta automáticamente l
 - Al actualizar un Pull Request existente
 - Al hacer push directo a `main`
 
+### Workflow de Auto-aprobación
+
+**Archivo:** `.github/workflows/auto-approve.yml`
+
+**Qué hace:**
+- ✅ Auto-aprueba automáticamente los PRs creados por el dueño del repositorio
+- ✅ Mantiene la protección de rama para otros colaboradores (requieren aprobación manual)
+- ✅ Permite que el dueño pueda mergear sus propios PRs sin esperar aprobación externa
+
+**Cómo funciona:**
+- Cuando el dueño del repositorio crea un PR, GitHub Actions lo detecta y lo aprueba automáticamente
+- Los PRs de otros colaboradores siguen requiriendo aprobación manual del dueño
+- Esto resuelve el problema de no poder aprobar tus propios PRs cuando la rama está protegida
+
 **Ver resultados:**
 1. Ve a la pestaña "Actions" en GitHub
-2. Haz clic en el workflow "Unit Tests"
+2. Haz clic en el workflow correspondiente ("Unit Tests" o "Auto-approve PRs from repository owner")
 3. Revisa los resultados y descarga los artifacts si necesitas los reportes de coverage
 
 Esto generará los archivos JavaScript en la carpeta `dist/` que son compatibles con todos los sistemas operativos.
