@@ -35,22 +35,6 @@ jobs:
               process.exit(0);
             }
             
-            // Verificar si el PAT está configurado
-            const hasPAT = process.env.PAT_CONFIGURED === 'true';
-            
-            if (!hasPAT) {
-              console.log('⚠️ GH_PAT no está configurado. Agregando comentario...');
-              
-              await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number: number,
-                body: `✅ **PR listo para mergear**: Este PR fue creado por el dueño del repositorio y está listo para ser mergeado.\n\n💡 **Para auto-merge automático**: Configura un Personal Access Token (PAT) con permisos de \`repo\` como secret \`GH_PAT\` en la configuración del repositorio. Ver [SETUP_AUTO_APPROVE.md](.github/workflows/SETUP_AUTO_APPROVE.md) para más detalles.\n\n⚠️ **Nota**: GitHub no permite que un usuario apruebe su propio PR. Este workflow puede mergear automáticamente el PR después de que pasen los tests si configuras el PAT.`
-              });
-              
-              process.exit(0);
-            }
-            
             // Obtener estado del PR
             const pr = await github.rest.pulls.get({
               owner,
@@ -62,43 +46,52 @@ jobs:
             
             // Verificar si está listo para mergear
             if (pr.data.mergeable === true && pr.data.mergeable_state === 'clean') {
-              console.log(`🔄 Mergeando automáticamente PR #${number}...`);
+              // Verificar si el PAT está configurado
+              const hasPAT = process.env.PAT_CONFIGURED === 'true';
               
-              try {
-                await github.rest.pulls.merge({
-                  owner,
-                  repo,
-                  pull_number: number,
-                  merge_method: 'squash',
-                  commit_title: `Merge PR #${number}: ${pr.data.title}`,
-                  commit_message: `Auto-merged PR #${number} del dueño del repositorio\n\n${pr.data.body || ''}`
-                });
+              if (hasPAT) {
+                console.log(`🔄 Intentando mergear automáticamente PR #${number}...`);
                 
-                console.log(`✅ PR #${number} mergeado exitosamente`);
-              } catch (error) {
-                console.error(`❌ Error al mergear PR: ${error.message}`);
-                
-                // Si falla por protección de rama, agregar comentario explicativo
-                if (error.status === 405 || error.message.includes('protected')) {
-                  await github.rest.issues.createComment({
+                try {
+                  await github.rest.pulls.merge({
                     owner,
                     repo,
-                    issue_number: number,
-                    body: `⚠️ **No se pudo mergear automáticamente**: El PR requiere aprobación debido a la protección de rama.\n\n💡 **Solución**: Aproba y mergea manualmente este PR, o ajusta la protección de rama para permitir que el dueño pueda mergear sin aprobación. Ver [SETUP_AUTO_APPROVE.md](.github/workflows/SETUP_AUTO_APPROVE.md) para más detalles.`
+                    pull_number: number,
+                    merge_method: 'squash',
+                    commit_title: `Merge PR #${number}: ${pr.data.title}`,
+                    commit_message: `Auto-merged PR #${number} del dueño del repositorio\n\n${pr.data.body || ''}`
                   });
+                  
+                  console.log(`✅ PR #${number} mergeado exitosamente`);
+                  return;
+                } catch (error) {
+                  console.error(`❌ Error al mergear PR: ${error.message}`);
+                  
+                  // Si falla por protección de rama (requiere aprobación)
+                  if (error.status === 405 || error.message.includes('approving review') || error.message.includes('protected')) {
+                    await github.rest.issues.createComment({
+                      owner,
+                      repo,
+                      issue_number: number,
+                      body: `✅ **PR listo para mergear**: Todos los tests pasaron y el PR está listo.\n\n⚠️ **Requiere aprobación manual**: GitHub no permite que un usuario apruebe su propio PR, incluso con PAT. Por favor, aprueba y mergea este PR manualmente.\n\n💡 **Solución alternativa**: Puedes ajustar la protección de rama en Settings → Branches para permitir que el dueño pueda mergear sin aprobación, pero esto reduce la seguridad.`
+                    });
+                    console.log('💡 Agregado comentario explicando que se requiere aprobación manual');
+                    process.exit(0); // No fallar el workflow
+                  }
+                  
+                  throw error;
                 }
-                
-                throw error;
+              } else {
+                // Sin PAT, solo agregar comentario
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: number,
+                  body: `✅ **PR listo para mergear**: Todos los tests pasaron y el PR está listo.\n\n⚠️ **Requiere aprobación manual**: GitHub no permite que un usuario apruebe su propio PR. Por favor, aprueba y mergea este PR manualmente.\n\n💡 **Nota**: Configurar un PAT como secret \`GH_PAT\` permitirá que el workflow intente mergear automáticamente, pero aún requerirá aprobación manual debido a la protección de rama.`
+                });
+                console.log('💡 Agregado comentario indicando que está listo para mergear');
               }
             } else {
               console.log(`⏳ PR #${number} no está listo para mergear. Estado: ${pr.data.mergeable_state}`);
               console.log('💡 Esperando a que los tests pasen...');
-              
-              // Agregar comentario indicando que está esperando
-              await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number: number,
-                body: `⏳ **Esperando tests**: El PR será mergeado automáticamente una vez que todos los tests pasen.\n\nEstado actual: \`${pr.data.mergeable_state}\``
-              });
             }
