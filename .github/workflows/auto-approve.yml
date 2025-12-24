@@ -1,0 +1,97 @@
+name: Auto-merge PRs from repository owner
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  auto-merge:
+    name: Auto-merge PRs from owner
+    runs-on: ubuntu-latest
+    # Permisos necesarios para mergear PRs
+    permissions:
+      contents: write
+      pull-requests: write
+    # Solo ejecutar si el PR es del dueño del repositorio
+    if: github.event.pull_request.user.login == github.repository_owner
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check PR status and merge
+        env:
+          PAT_CONFIGURED: ${{ secrets.GH_PAT != '' }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          script: |
+            const { owner, repo, number } = context.issue;
+            const prAuthor = context.payload.pull_request.user.login;
+            const repoOwner = context.repo.owner;
+            
+            if (prAuthor !== repoOwner) {
+              console.log(`⏭️ Saltando: El PR #${number} fue creado por ${prAuthor}, no por el dueño (${repoOwner})`);
+              process.exit(0);
+            }
+            
+            // Obtener estado del PR
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: number
+            });
+            
+            console.log(`Estado del PR #${number}: mergeable=${pr.data.mergeable}, mergeable_state=${pr.data.mergeable_state}`);
+            
+            // Verificar si está listo para mergear
+            if (pr.data.mergeable === true && pr.data.mergeable_state === 'clean') {
+              // Verificar si el PAT está configurado
+              const hasPAT = process.env.PAT_CONFIGURED === 'true';
+              
+              if (hasPAT) {
+                console.log(`🔄 Intentando mergear automáticamente PR #${number}...`);
+                
+                try {
+                  await github.rest.pulls.merge({
+                    owner,
+                    repo,
+                    pull_number: number,
+                    merge_method: 'squash',
+                    commit_title: `Merge PR #${number}: ${pr.data.title}`,
+                    commit_message: `Auto-merged PR #${number} del dueño del repositorio\n\n${pr.data.body || ''}`
+                  });
+                  
+                  console.log(`✅ PR #${number} mergeado exitosamente`);
+                  return;
+                } catch (error) {
+                  console.error(`❌ Error al mergear PR: ${error.message}`);
+                  
+                  // Si falla por protección de rama (requiere aprobación)
+                  if (error.status === 405 || error.message.includes('approving review') || error.message.includes('protected')) {
+                    await github.rest.issues.createComment({
+                      owner,
+                      repo,
+                      issue_number: number,
+                      body: `✅ **PR listo para mergear**: Todos los tests pasaron y el PR está listo.\n\n⚠️ **Requiere aprobación manual**: GitHub no permite que un usuario apruebe su propio PR, incluso con PAT. Por favor, aprueba y mergea este PR manualmente.\n\n💡 **Solución alternativa**: Puedes ajustar la protección de rama en Settings → Branches para permitir que el dueño pueda mergear sin aprobación, pero esto reduce la seguridad.`
+                    });
+                    console.log('💡 Agregado comentario explicando que se requiere aprobación manual');
+                    process.exit(0); // No fallar el workflow
+                  }
+                  
+                  throw error;
+                }
+              } else {
+                // Sin PAT, solo agregar comentario
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: number,
+                  body: `✅ **PR listo para mergear**: Todos los tests pasaron y el PR está listo.\n\n⚠️ **Requiere aprobación manual**: GitHub no permite que un usuario apruebe su propio PR. Por favor, aprueba y mergea este PR manualmente.\n\n💡 **Nota**: Configurar un PAT como secret \`GH_PAT\` permitirá que el workflow intente mergear automáticamente, pero aún requerirá aprobación manual debido a la protección de rama.`
+                });
+                console.log('💡 Agregado comentario indicando que está listo para mergear');
+              }
+            } else {
+              console.log(`⏳ PR #${number} no está listo para mergear. Estado: ${pr.data.mergeable_state}`);
+              console.log('💡 Esperando a que los tests pasen...');
+            }

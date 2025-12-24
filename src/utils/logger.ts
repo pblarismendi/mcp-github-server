@@ -15,8 +15,10 @@ interface LogEntry {
   message: string;
   tool?: string;
   duration?: number;
+  success?: boolean;
   error?: string;
   metadata?: Record<string, any>;
+  args?: Record<string, any>;
 }
 
 class Logger {

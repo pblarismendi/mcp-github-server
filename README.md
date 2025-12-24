@@ -1,5 +1,7 @@
 # 🐙 Servidor MCP para GitHub
 
+<!-- Última actualización: 2025-12-24 -->
+
 Un servidor completo de Model Context Protocol (MCP) para interactuar con GitHub. Permite listar repositorios (públicos y privados), gestionar issues, pull requests, branches y mucho más.
 
 ## 🌍 Compatibilidad
@@ -41,6 +43,7 @@ Un servidor completo de Model Context Protocol (MCP) para interactuar con GitHub
 
 ### Git y Branches
 - ✅ **Listar branches** de repositorios
+- ✅ **Proteger ramas** con configuración completa (requiere PRs, aprobaciones, etc.) 🆕
 - ✅ **Leer contenido de archivos** y directorios
 
 ### Gestión de Commits 🆕
@@ -205,6 +208,44 @@ npm run test:coverage
 ```
 
 **Nota:** Los tests usan mocks y **no afectan repositorios reales**. Ver [TESTING.md](./TESTING.md) para más detalles.
+
+## 🔄 CI/CD con GitHub Actions
+
+El proyecto incluye workflows de GitHub Actions para automatizar el proceso de desarrollo.
+
+### Workflow de Tests
+
+**Archivo:** `.github/workflows/tests.yml`
+
+**Qué hace:**
+- ✅ Ejecuta tests unitarios automáticamente en cada PR
+- ✅ Compila el proyecto para verificar que no hay errores de TypeScript
+- ✅ Genera reportes de coverage
+- ✅ Sube los reportes como artifacts (disponibles por 7 días)
+
+**Cuándo se ejecuta:**
+- Al abrir un Pull Request hacia `main`
+- Al actualizar un Pull Request existente
+- Al hacer push directo a `main`
+
+### Workflow de Auto-aprobación
+
+**Archivo:** `.github/workflows/auto-approve.yml`
+
+**Qué hace:**
+- ✅ Auto-aprueba automáticamente los PRs creados por el dueño del repositorio
+- ✅ Mantiene la protección de rama para otros colaboradores (requieren aprobación manual)
+- ✅ Permite que el dueño pueda mergear sus propios PRs sin esperar aprobación externa
+
+**Cómo funciona:**
+- Cuando el dueño del repositorio crea un PR, GitHub Actions lo detecta y lo aprueba automáticamente
+- Los PRs de otros colaboradores siguen requiriendo aprobación manual del dueño
+- Esto resuelve el problema de no poder aprobar tus propios PRs cuando la rama está protegida
+
+**Ver resultados:**
+1. Ve a la pestaña "Actions" en GitHub
+2. Haz clic en el workflow correspondiente ("Unit Tests" o "Auto-approve PRs from repository owner")
+3. Revisa los resultados y descarga los artifacts si necesitas los reportes de coverage
 
 Esto generará los archivos JavaScript en la carpeta `dist/` que son compatibles con todos los sistemas operativos.
 
@@ -525,6 +566,39 @@ Lista las ramas de un repositorio.
 - `protected` (opcional): filtrar solo ramas protegidas (boolean)
 - `per_page` (opcional): número de resultados (default: 30)
 - `page` (opcional): número de página (default: 1)
+
+### `protect_branch` 🆕
+Protege una rama del repositorio. Requiere PRs para mergear y puede requerir aprobaciones.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `branch` (requerido): nombre de la rama a proteger (ej: `"main"`)
+- `require_pr` (opcional): requerir PR antes de mergear (default: `true`)
+- `required_approvals` (opcional): número de aprobaciones requeridas (default: `1`, mínimo: `1`)
+- `dismiss_stale_reviews` (opcional): descartar aprobaciones obsoletas cuando se agregan nuevos commits (default: `true`)
+- `require_code_owner_reviews` (opcional): requerir revisión de code owners (default: `false`)
+- `enforce_admins` (opcional): aplicar protección también a administradores (default: `true`)
+- `allow_force_pushes` (opcional): permitir force pushes (default: `false`)
+- `allow_deletions` (opcional): permitir eliminar la rama (default: `false`)
+
+**Ejemplo:**
+```json
+{
+  "name": "protect_branch",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "branch": "main",
+    "require_pr": true,
+    "required_approvals": 1,
+    "enforce_admins": true,
+    "allow_force_pushes": false
+  }
+}
+```
+
+**⚠️ Nota de Seguridad:** Esta herramienta modifica la configuración de seguridad del repositorio. Asegúrate de tener los permisos adecuados y revisa cuidadosamente cualquier PR que modifique scripts o herramientas relacionadas con protección de ramas. Ver [SECURITY.md](./SECURITY.md) para más información.
 
 ### `get_commit` 🆕
 Obtiene detalles completos de un commit específico, incluyendo estadísticas y archivos modificados.
@@ -1018,6 +1092,24 @@ Información del usuario autenticado en formato JSON.
 - Asegúrate de haber compilado el proyecto (`npm run build`)
 - Revisa los logs de Cursor/Claude Desktop para ver errores específicos
 - En Windows, verifica que Node.js esté en el PATH del sistema
+
+## 🔒 Seguridad
+
+### ⚠️ Scripts con Información Sensible
+
+Este repositorio incluye scripts de ejemplo genéricos (`protect-branch.example.sh`) que puedes usar como plantilla. **Nunca subas scripts con valores hardcodeados** de repositorios específicos al repositorio público.
+
+**Scripts que están en `.gitignore` y NO deben subirse:**
+- `protect-main-branch.sh` - Contiene valores específicos de repositorio
+- `test-protect-branch.js` - Contiene valores específicos de repositorio
+
+**Mejores prácticas:**
+- ✅ Usa scripts genéricos con variables de entorno
+- ✅ Usa la herramienta MCP `protect_branch` directamente
+- ✅ Revisa cuidadosamente PRs que modifiquen scripts de seguridad
+- ✅ Nunca subas tokens al repositorio (ya están en `.gitignore`)
+
+Para más información sobre seguridad, consulta [SECURITY.md](./SECURITY.md).
 
 ## 👨‍💻 Desarrollador
 

@@ -236,6 +236,64 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "protect_branch",
+        description: "Protege una rama del repositorio. Requiere PRs para mergear y puede requerir aprobaciones.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            branch: {
+              type: "string",
+              description: "Nombre de la rama a proteger (ej: 'main')",
+            },
+            require_pr: {
+              type: "boolean",
+              description: "Requerir PR antes de mergear",
+              default: true,
+            },
+            required_approvals: {
+              type: "number",
+              description: "Número de aprobaciones requeridas (default: 1)",
+              default: 1,
+              minimum: 1,
+            },
+            dismiss_stale_reviews: {
+              type: "boolean",
+              description: "Descartar aprobaciones obsoletas cuando se agregan nuevos commits",
+              default: true,
+            },
+            require_code_owner_reviews: {
+              type: "boolean",
+              description: "Requerir revisión de code owners",
+              default: false,
+            },
+            enforce_admins: {
+              type: "boolean",
+              description: "Aplicar protección también a administradores",
+              default: true,
+            },
+            allow_force_pushes: {
+              type: "boolean",
+              description: "Permitir force pushes",
+              default: false,
+            },
+            allow_deletions: {
+              type: "boolean",
+              description: "Permitir eliminar la rama",
+              default: false,
+            },
+          },
+          required: ["owner", "repo", "branch"],
+        },
+      },
+      {
         name: "get_commit",
         description: "Obtiene detalles de un commit específico",
         inputSchema: {
@@ -1669,6 +1727,77 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         // Guardar en caché
         cache.set(cacheKey, result, CACHE_TTL.BRANCHES);
+        return result;
+      }
+
+      case "protect_branch": {
+        const { owner, repo } = validateOwnerRepo(args as any);
+        const {
+          branch,
+          require_pr = true,
+          required_approvals = 1,
+          dismiss_stale_reviews = true,
+          require_code_owner_reviews = false,
+          enforce_admins = true,
+          allow_force_pushes = false,
+          allow_deletions = false,
+        } = args as any;
+
+        if (!branch) {
+          throw new Error('El parámetro "branch" es requerido');
+        }
+
+        const protectionConfig: any = {
+          required_status_checks: null,
+          enforce_admins: enforce_admins,
+          required_pull_request_reviews: require_pr
+            ? {
+                required_approving_review_count: required_approvals,
+                dismiss_stale_reviews: dismiss_stale_reviews,
+                require_code_owner_reviews: require_code_owner_reviews,
+                require_last_push_approval: false,
+              }
+            : null,
+          restrictions: null, // null permite PRs de cualquier usuario
+          allow_force_pushes: allow_force_pushes,
+          allow_deletions: allow_deletions,
+        };
+
+        const response = await octokit.repos.updateBranchProtection({
+          owner,
+          repo,
+          branch,
+          ...protectionConfig,
+        });
+
+        const result = {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: `Rama "${branch}" protegida exitosamente`,
+                  branch: branch,
+                  protection: {
+                    require_pr: require_pr,
+                    required_approvals: required_approvals,
+                    dismiss_stale_reviews: dismiss_stale_reviews,
+                    require_code_owner_reviews: require_code_owner_reviews,
+                    enforce_admins: enforce_admins,
+                    allow_force_pushes: allow_force_pushes,
+                    allow_deletions: allow_deletions,
+                  },
+                  url: response.data.url,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+
+        logger.toolEnd(name, Date.now() - startTime, true);
         return result;
       }
 
