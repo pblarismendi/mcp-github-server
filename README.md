@@ -1,5 +1,7 @@
 # 🐙 Servidor MCP para GitHub
 
+<!-- Última actualización: 2025-12-24 -->
+
 Un servidor completo de Model Context Protocol (MCP) para interactuar con GitHub. Permite listar repositorios (públicos y privados), gestionar issues, pull requests, branches y mucho más.
 
 ## 🌍 Compatibilidad
