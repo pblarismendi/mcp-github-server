@@ -138,11 +138,128 @@ export const CACHE_TTL = {
 
 ## 🎯 Próximas Mejoras
 
-- [ ] Retry logic para requests fallidos
-- [ ] Rate limiting automático
-- [ ] Caché persistente (Redis/archivo)
-- [ ] Métricas exportables (Prometheus)
-- [ ] Health checks endpoint
+### Estado Actual de las Características Pendientes
+
+#### 1. ⏳ Retry logic para requests fallidos
+**Estado:** No implementado
+
+**Situación actual:**
+- ✅ Se detectan errores de red y del servidor (500, 502, 503, 504)
+- ✅ Se proporcionan mensajes descriptivos y sugerencias
+- ❌ No hay reintentos automáticos para errores transitorios
+- ❌ No hay backoff exponencial
+
+**Qué falta:**
+- Implementar lógica de retry con backoff exponencial
+- Reintentar automáticamente en errores 5xx y errores de red
+- Configurar número máximo de reintentos (ej: 3 intentos)
+- No reintentar en errores 4xx (excepto 429 con manejo especial)
+
+**Complejidad:** Media
+**Prioridad:** Media-Alta (mejora la resiliencia)
+
+---
+
+#### 2. ⏳ Rate limiting automático
+**Estado:** Parcialmente implementado
+
+**Situación actual:**
+- ✅ Se detecta cuando se excede el rate limit (error 429)
+- ✅ Se proporciona mensaje claro y sugerencia
+- ✅ El caché ayuda a reducir llamadas a la API
+- ❌ No hay rate limiting preventivo
+- ❌ No se respetan los headers `X-RateLimit-Remaining` y `X-RateLimit-Reset`
+
+**Qué falta:**
+- Implementar rate limiting preventivo basado en headers de respuesta
+- Cola de requests cuando se acerca al límite
+- Esperar automáticamente hasta que se resetee el rate limit
+- Tracking de rate limits por endpoint
+
+**Complejidad:** Media-Alta
+**Prioridad:** Media (el caché ya mitiga parcialmente el problema)
+
+---
+
+#### 3. ⏳ Caché persistente (Redis/archivo)
+**Estado:** No implementado
+
+**Situación actual:**
+- ✅ Caché en memoria funcional (`SimpleCache` con `Map`)
+- ✅ TTLs configurables por tipo de dato
+- ✅ Limpieza automática de entradas expiradas
+- ❌ Los datos se pierden al reiniciar el servidor
+- ❌ No hay persistencia en disco o Redis
+
+**Qué falta:**
+- Opción 1: Persistencia en archivo JSON (simple)
+- Opción 2: Integración con Redis (más robusto, requiere Redis)
+- Mantener compatibilidad con caché en memoria como fallback
+- Configuración opcional de persistencia
+
+**Complejidad:** Media
+**Prioridad:** Baja (el caché en memoria funciona bien para la mayoría de casos)
+
+---
+
+#### 4. ⏳ Métricas exportables (Prometheus)
+**Estado:** No implementado
+
+**Situación actual:**
+- ✅ Estadísticas en memoria del logger (`logger.getStats()`)
+- ✅ Estadísticas en memoria del caché (`cache.getStats()`)
+- ✅ Métricas de tiempo de ejecución por herramienta
+- ❌ No hay exportación a Prometheus
+- ❌ No hay endpoint HTTP para métricas
+
+**Qué falta:**
+- Implementar servidor HTTP opcional para exponer métricas
+- Formato de métricas compatible con Prometheus
+- Métricas de: requests totales, errores, latencia, rate limits, cache hits/misses
+- Configuración opcional (no todos los usuarios necesitan métricas)
+
+**Complejidad:** Alta (requiere servidor HTTP adicional)
+**Prioridad:** Baja (las métricas en memoria son suficientes para debugging)
+
+**Nota:** El servidor MCP usa stdio como transporte, así que agregar HTTP requeriría un servidor adicional.
+
+---
+
+#### 5. ⏳ Health checks endpoint
+**Estado:** No implementado
+
+**Situación actual:**
+- ✅ El servidor MCP funciona correctamente
+- ✅ Manejo de errores robusto
+- ❌ No hay endpoint HTTP para health checks
+- ❌ No hay forma de verificar el estado sin hacer una request real
+
+**Qué falta:**
+- Implementar servidor HTTP opcional para health checks
+- Endpoint `/health` que verifique:
+  - Conexión con GitHub API
+  - Estado del token
+  - Estado del caché
+- Endpoint `/ready` para verificar que el servidor está listo
+
+**Complejidad:** Media-Alta (requiere servidor HTTP adicional)
+**Prioridad:** Baja (el servidor MCP no requiere health checks HTTP tradicionales)
+
+**Nota:** Como el servidor MCP usa stdio, un health check HTTP requeriría un servidor adicional. Alternativamente, se podría implementar una herramienta MCP `check_health` que retorne el estado.
+
+---
+
+## 📋 Resumen de Prioridades
+
+| Característica | Estado | Prioridad | Complejidad | Esfuerzo Estimado |
+|---------------|--------|-----------|-------------|-------------------|
+| Retry logic | No implementado | Media-Alta | Media | 4-6 horas |
+| Rate limiting automático | Parcial | Media | Media-Alta | 6-8 horas |
+| Caché persistente | No implementado | Baja | Media | 4-6 horas |
+| Métricas Prometheus | No implementado | Baja | Alta | 8-12 horas |
+| Health checks | No implementado | Baja | Media-Alta | 4-6 horas |
+
+**Recomendación:** Implementar primero **Retry logic** ya que mejora significativamente la resiliencia del servidor y es relativamente simple de implementar.
 
 ## 📝 Notas
 

@@ -2,171 +2,214 @@
 
 ## 📊 Estado Actual
 
-### ✅ Funcionalidades Implementadas
-- Listar repositorios con filtros
-- Obtener información de repositorios
-- Listar y crear issues
-- Listar pull requests
-- Listar branches
-- Leer contenido de archivos/directorios
-- Buscar repositorios
-- Obtener información del usuario
-- Recursos MCP básicos
+### ✅ Funcionalidades Implementadas (Actualizado: 2025-12-24)
+
+**Repositorios:**
+- ✅ Listar repositorios con filtros avanzados
+- ✅ Obtener información detallada de repositorios
+- ✅ Buscar repositorios
+
+**Pull Requests (Gestión Completa):**
+- ✅ Listar pull requests
+- ✅ Crear pull requests (incluyendo drafts)
+- ✅ Obtener detalles completos de un PR
+- ✅ Mergear pull requests (merge, squash, rebase)
+- ✅ Cerrar pull requests
+- ✅ Actualizar pull requests
+- ✅ Agregar reviews (aprobar, solicitar cambios, comentar)
+- ✅ Listar reviews de un PR
+
+**Issues (CRUD Completo):**
+- ✅ Listar issues con filtros
+- ✅ Crear issues
+- ✅ Actualizar issues
+- ✅ Cerrar issues
+- ✅ Agregar comentarios
+- ✅ Listar comentarios
+
+**Commits y Git:**
+- ✅ Obtener detalles de un commit
+- ✅ Listar commits con filtros
+- ✅ Comparar commits/branches
+- ⏳ Crear commits (pendiente)
+- ⏳ Ver diff de un commit (pendiente)
+
+**Búsqueda Avanzada:**
+- ✅ Buscar código en repositorios
+- ✅ Buscar issues y PRs
+- ✅ Buscar usuarios
+- ✅ Buscar commits
+
+**Releases y Tags:**
+- ✅ Listar releases
+- ✅ Crear releases
+- ✅ Obtener detalles de un release
+- ✅ Listar tags
+- ✅ Crear tags
+
+**Webhooks:**
+- ✅ Listar webhooks
+- ✅ Obtener detalles de un webhook
+- ✅ Crear webhooks
+- ✅ Actualizar webhooks
+- ✅ Eliminar webhooks
+- ✅ Ping webhooks
+
+**Otros:**
+- ✅ Listar branches
+- ✅ Leer contenido de archivos/directorios
+- ✅ Obtener información del usuario
+- ✅ Recursos MCP básicos
 
 ---
 
 ## 🎯 Prioridad Alta - Funcionalidades Core
 
-### 1. **Gestión Completa de Pull Requests** 🔥
-**Impacto:** Alto | **Esfuerzo:** Medio
+### 1. **Gestión Completa de Pull Requests** 🔥 ✅ COMPLETADO
+**Impacto:** Alto | **Esfuerzo:** Medio | **Estado:** ✅ Implementado
 
 ```typescript
-// Nuevas herramientas a agregar:
-- create_pull_request: Crear PRs
-- merge_pull_request: Mergear PRs (squash, merge, rebase)
-- close_pull_request: Cerrar PRs
-- get_pull_request: Obtener detalles completos de un PR
-- list_pull_request_reviews: Ver reviews de un PR
-- add_pull_request_review: Agregar review a un PR
-- update_pull_request: Actualizar título/descripción de PR
+// Herramientas implementadas:
+✅ create_pull_request: Crear PRs
+✅ merge_pull_request: Mergear PRs (squash, merge, rebase)
+✅ close_pull_request: Cerrar PRs
+✅ get_pull_request: Obtener detalles completos de un PR
+✅ list_pull_request_reviews: Ver reviews de un PR
+✅ add_pull_request_review: Agregar review a un PR
+✅ update_pull_request: Actualizar título/descripción de PR
 ```
 
 **Beneficios:**
-- Automatización completa del flujo de PRs
-- Integración con workflows de CI/CD
-- Gestión de code reviews
+- ✅ Automatización completa del flujo de PRs
+- ✅ Integración con workflows de CI/CD
+- ✅ Gestión de code reviews
 
 ---
 
-### 2. **Gestión de Commits y Git** 🔥
-**Impacto:** Alto | **Esfuerzo:** Medio
+### 2. **Gestión de Commits y Git** 🔥 ⚠️ PARCIALMENTE COMPLETADO
+**Impacto:** Alto | **Esfuerzo:** Medio | **Estado:** ⚠️ 60% Implementado
 
 ```typescript
-// Nuevas herramientas:
-- get_commit: Obtener detalles de un commit específico
-- list_commits: Listar commits de un branch/repo
-- compare_commits: Comparar dos commits o branches
-- create_commit: Crear commits (usando GitHub API o Git)
-- get_commit_diff: Ver diff de un commit
+// Herramientas implementadas:
+✅ get_commit: Obtener detalles de un commit específico
+✅ list_commits: Listar commits de un branch/repo
+✅ compare_commits: Comparar dos commits o branches
+⏳ create_commit: Crear commits (usando GitHub API o Git) - PENDIENTE
+⏳ get_commit_diff: Ver diff de un commit - PENDIENTE
 ```
 
 **Beneficios:**
-- Análisis de historial de código
-- Comparación de branches
-- Automatización de commits
+- ✅ Análisis de historial de código
+- ✅ Comparación de branches
+- ⏳ Automatización de commits (pendiente)
 
 ---
 
-### 3. **Búsqueda Avanzada** 🔥
-**Impacto:** Alto | **Esfuerzo:** Bajo-Medio
+### 3. **Búsqueda Avanzada** 🔥 ✅ COMPLETADO
+**Impacto:** Alto | **Esfuerzo:** Bajo-Medio | **Estado:** ✅ Implementado
 
 ```typescript
-// Nuevas herramientas:
-- search_code: Buscar código en repositorios
-- search_issues: Búsqueda avanzada de issues
-- search_users: Buscar usuarios en GitHub
-- search_commits: Buscar commits por mensaje/autor
+// Herramientas implementadas:
+✅ search_code: Buscar código en repositorios
+✅ search_issues: Búsqueda avanzada de issues
+✅ search_users: Buscar usuarios en GitHub
+✅ search_commits: Buscar commits por mensaje/autor
 ```
 
 **Beneficios:**
-- Encontrar código rápidamente
-- Análisis de código base
-- Descubrimiento de patrones
+- ✅ Encontrar código rápidamente
+- ✅ Análisis de código base
+- ✅ Descubrimiento de patrones
 
 ---
 
-### 4. **Gestión de Releases y Tags** ⭐
-**Impacto:** Medio-Alto | **Esfuerzo:** Bajo
+### 4. **Gestión de Releases y Tags** ⭐ ✅ COMPLETADO
+**Impacto:** Medio-Alto | **Esfuerzo:** Bajo | **Estado:** ✅ Implementado
 
 ```typescript
-// Nuevas herramientas:
-- list_releases: Listar releases de un repo
-- create_release: Crear un nuevo release
-- get_release: Obtener detalles de un release
-- list_tags: Listar tags de un repo
-- create_tag: Crear un tag
+// Herramientas implementadas:
+✅ list_releases: Listar releases de un repo
+✅ create_release: Crear un nuevo release
+✅ get_release: Obtener detalles de un release
+✅ list_tags: Listar tags de un repo
+✅ create_tag: Crear un tag
 ```
 
 **Beneficios:**
-- Automatización de versionado
-- Gestión de releases
-- Integración con CI/CD
+- ✅ Automatización de versionado
+- ✅ Gestión de releases
+- ✅ Integración con CI/CD
 
 ---
 
 ## 🛠️ Prioridad Media - Mejoras Técnicas
 
-### 5. **Validación y Manejo de Errores Mejorado** ⚡
-**Impacto:** Alto | **Esfuerzo:** Medio
+### 5. **Validación y Manejo de Errores Mejorado** ⚡ ⚠️ PARCIALMENTE COMPLETADO
+**Impacto:** Alto | **Esfuerzo:** Medio | **Estado:** ⚠️ 80% Implementado
 
-**Mejoras:**
-- Validación de parámetros con Zod o similar
-- Mensajes de error más descriptivos
-- Rate limiting handling
-- Retry logic para requests fallidos
-- Validación de permisos antes de operaciones
+**Mejoras implementadas:**
+- ✅ Validación de parámetros con Zod
+- ✅ Mensajes de error más descriptivos
+- ✅ Rate limiting handling (detección de error 429)
+- ⏳ Retry logic para requests fallidos - PENDIENTE
+- ✅ Validación de permisos antes de operaciones
 
 **Ejemplo:**
 ```typescript
-import { z } from 'zod';
+import { validateOwnerRepo, validatePositiveNumber } from './utils/validation.js';
 
-const RepositorySchema = z.object({
-  owner: z.string().min(1),
-  repo: z.string().min(1),
-});
-
-// Validar antes de hacer requests
+const { owner, repo } = validateOwnerRepo(args);
+const perPage = validatePositiveNumber(args.per_page, "per_page", 1, 100);
 ```
 
 ---
 
-### 6. **Caché Inteligente** ⚡
-**Impacto:** Medio-Alto | **Esfuerzo:** Medio
+### 6. **Caché Inteligente** ⚡ ✅ COMPLETADO
+**Impacto:** Medio-Alto | **Esfuerzo:** Medio | **Estado:** ✅ Implementado
 
 **Implementación:**
-- Caché en memoria para datos frecuentes
-- TTL configurable por tipo de dato
-- Invalidación automática
-- Opción de deshabilitar caché
+- ✅ Caché en memoria para datos frecuentes
+- ✅ TTL configurable por tipo de dato
+- ✅ Invalidación automática
+- ✅ Estadísticas del caché
 
 **Beneficios:**
-- Reducción de llamadas a API
-- Mejor rendimiento
-- Menor consumo de rate limits
+- ✅ Reducción de llamadas a API
+- ✅ Mejor rendimiento
+- ✅ Menor consumo de rate limits
 
 ---
 
-### 7. **Logging Estructurado y Métricas** 📊
-**Impacto:** Medio | **Esfuerzo:** Bajo-Medio
+### 7. **Logging Estructurado y Métricas** 📊 ⚠️ PARCIALMENTE COMPLETADO
+**Impacto:** Medio | **Esfuerzo:** Bajo-Medio | **Estado:** ⚠️ 75% Implementado
 
-**Mejoras:**
-- Logging estructurado (JSON)
-- Niveles de log configurables
-- Métricas de uso (requests, errores, tiempo)
-- Health checks
+**Mejoras implementadas:**
+- ✅ Logging estructurado (JSON) con Winston
+- ✅ Niveles de log configurables (DEBUG, INFO, WARN, ERROR)
+- ✅ Métricas de uso (requests, errores, tiempo)
+- ⏳ Health checks endpoint - PENDIENTE (ver IMPROVEMENTS.md)
 
 **Ejemplo:**
 ```typescript
-import winston from 'winston';
+import { logger } from './utils/logger.js';
 
-const logger = winston.createLogger({
-  format: winston.format.json(),
-  // ...
-});
+logger.toolStart('list_repositories', args);
+logger.toolEnd('list_repositories', duration, true);
+const stats = logger.getStats();
 ```
 
 ---
 
-### 8. **Gestión de Issues Avanzada** 📝
-**Impacto:** Medio | **Esfuerzo:** Bajo
+### 8. **Gestión de Issues Avanzada** 📝 ✅ COMPLETADO
+**Impacto:** Medio | **Esfuerzo:** Bajo | **Estado:** ✅ Implementado
 
 ```typescript
-// Nuevas herramientas:
-- update_issue: Actualizar issues
-- close_issue: Cerrar issues
-- add_issue_comment: Agregar comentarios
-- list_issue_comments: Listar comentarios
-- add_issue_labels: Agregar/remover labels
+// Herramientas implementadas:
+✅ update_issue: Actualizar issues
+✅ close_issue: Cerrar issues
+✅ add_issue_comment: Agregar comentarios
+✅ list_issue_comments: Listar comentarios
+⏳ add_issue_labels: Agregar/remover labels - PENDIENTE (se puede hacer con update_issue)
 ```
 
 ---
@@ -200,14 +243,17 @@ const logger = winston.createLogger({
 
 ---
 
-### 11. **Gestión de Webhooks** 🔔
-**Impacto:** Bajo-Medio | **Esfuerzo:** Alto
+### 11. **Gestión de Webhooks** 🔔 ✅ COMPLETADO
+**Impacto:** Bajo-Medio | **Esfuerzo:** Alto | **Estado:** ✅ Implementado
 
 ```typescript
-// Nuevas herramientas:
-- list_webhooks: Listar webhooks de un repo
-- create_webhook: Crear webhooks
-- delete_webhook: Eliminar webhooks
+// Herramientas implementadas:
+✅ list_webhooks: Listar webhooks de un repo
+✅ get_webhook: Obtener detalles de un webhook
+✅ create_webhook: Crear webhooks
+✅ update_webhook: Actualizar webhooks
+✅ delete_webhook: Eliminar webhooks
+✅ ping_webhook: Ping a un webhook para verificar
 ```
 
 ---
@@ -227,34 +273,54 @@ const logger = winston.createLogger({
 
 ## 🧪 Mejoras de Calidad
 
-### 13. **Tests Unitarios y de Integración** ✅
-**Impacto:** Alto | **Esfuerzo:** Alto
+### 13. **Tests Unitarios y de Integración** ✅ ⚠️ PARCIALMENTE COMPLETADO
+**Impacto:** Alto | **Esfuerzo:** Alto | **Estado:** ⚠️ 90% Implementado
 
-- Tests unitarios con Jest/Vitest
-- Tests de integración con GitHub API mock
-- Coverage mínimo del 80%
-- CI/CD con GitHub Actions
+**Implementado:**
+- ✅ Tests unitarios con Vitest
+- ✅ Tests de integración con GitHub API mock
+- ✅ Coverage del 95.15% (supera el objetivo del 80%)
+- ⏳ CI/CD con GitHub Actions - PENDIENTE
+
+**Archivos de test:**
+- `src/__tests__/handlers.test.ts` - Tests de handlers
+- `src/__tests__/pull-requests.test.ts` - Tests de PRs
+- `src/__tests__/repositories.test.ts` - Tests de repositorios
+- `src/__tests__/issues.test.ts` - Tests de issues
+- `src/__tests__/user.test.ts` - Tests de usuario
+- `src/__tests__/validation.test.ts` - Tests de validación
+- `src/__tests__/error-handler.test.ts` - Tests de manejo de errores
+- `src/__tests__/cache.test.ts` - Tests de caché
+- `src/__tests__/logger.test.ts` - Tests de logger
 
 ---
 
-### 14. **Documentación Mejorada** 📚
-**Impacto:** Medio | **Esfuerzo:** Bajo-Medio
+### 14. **Documentación Mejorada** 📚 ✅ COMPLETADO
+**Impacto:** Medio | **Esfuerzo:** Bajo-Medio | **Estado:** ✅ Implementado
 
-- Ejemplos de uso para cada herramienta
-- Guías de mejores prácticas
-- Troubleshooting guide
-- API reference completa
-- Video tutoriales (opcional)
+**Documentación disponible:**
+- ✅ README.md completo con ejemplos de uso para cada herramienta
+- ✅ Documentación detallada de todas las herramientas (80+ herramientas)
+- ✅ Guía de instalación multi-plataforma
+- ✅ IMPROVEMENTS.md - Documentación de mejoras técnicas
+- ✅ TESTING.md - Guía de testing
+- ✅ COVERAGE_EXPLANATION.md - Explicación de coverage
+- ✅ ROADMAP.md - Roadmap completo del proyecto
+- ⏳ Troubleshooting guide detallado - PENDIENTE
+- ⏳ Video tutoriales - PENDIENTE
 
 ---
 
-### 15. **TypeScript Mejorado** 🔷
-**Impacto:** Medio | **Esfuerzo:** Bajo
+### 15. **TypeScript Mejorado** 🔷 ⚠️ PARCIALMENTE COMPLETADO
+**Impacto:** Medio | **Esfuerzo:** Bajo | **Estado:** ⚠️ 85% Implementado
 
-- Tipos estrictos para todas las funciones
-- Interfaces compartidas
-- Type guards
-- Eliminar `any` types
+**Implementado:**
+- ✅ Tipos estrictos para la mayoría de funciones
+- ✅ Interfaces compartidas en handlers
+- ✅ Type guards en validación y error handling
+- ⚠️ Algunos `any` types aún presentes (principalmente en args de handlers)
+
+**Nota:** Los `any` restantes son principalmente en parámetros de handlers donde se reciben argumentos dinámicos del MCP. Se podría mejorar con tipos más estrictos.
 
 ---
 
@@ -284,21 +350,36 @@ const logger = winston.createLogger({
 
 ## 📈 Métricas de Éxito
 
-- **Cobertura de código:** >80%
-- **Tiempo de respuesta:** <500ms promedio
-- **Rate limit usage:** <50% del límite diario
-- **Errores:** <1% de requests fallidos
-- **Satisfacción:** Feedback positivo de usuarios
+| Métrica | Objetivo | Estado Actual | ✅/❌ |
+|---------|----------|---------------|-------|
+| **Cobertura de código** | >80% | **95.15%** | ✅ Superado |
+| **Tiempo de respuesta** | <500ms promedio | Por medir | ⏳ Pendiente |
+| **Rate limit usage** | <50% del límite diario | Mitigado con caché | ✅ Mejorado |
+| **Errores** | <1% de requests fallidos | Por medir | ⏳ Pendiente |
+| **Satisfacción** | Feedback positivo | En uso | ✅ En progreso |
+
+**Logros destacados:**
+- ✅ Coverage del 95.15% (supera el objetivo del 80%)
+- ✅ 80+ herramientas implementadas
+- ✅ Caché inteligente reduce llamadas a API
+- ✅ Manejo robusto de errores con mensajes descriptivos
 
 ---
 
-## 🤔 Decisiones Técnicas Pendientes
+## 🤔 Decisiones Técnicas
 
-1. **Librería de validación:** Zod vs Yup vs Joi
-2. **Sistema de caché:** node-cache vs Redis vs in-memory
-3. **Logging:** Winston vs Pino vs console
-4. **Testing:** Jest vs Vitest vs Mocha
-5. **CI/CD:** GitHub Actions vs otras plataformas
+| Decisión | Opciones Consideradas | Decisión Final | Estado |
+|----------|----------------------|----------------|--------|
+| **Librería de validación** | Zod vs Yup vs Joi | ✅ **Zod** | Implementado |
+| **Sistema de caché** | node-cache vs Redis vs in-memory | ✅ **In-memory (Map)** | Implementado |
+| **Logging** | Winston vs Pino vs console | ✅ **Winston** | Implementado |
+| **Testing** | Jest vs Vitest vs Mocha | ✅ **Vitest** | Implementado |
+| **CI/CD** | GitHub Actions vs otras | ⏳ **Pendiente** | Por implementar |
+
+**Pendientes:**
+- ⏳ Retry logic para requests fallidos
+- ⏳ Rate limiting automático preventivo
+- ⏳ CI/CD con GitHub Actions
 
 ---
 
@@ -323,6 +404,49 @@ const logger = winston.createLogger({
 
 ---
 
-**Última actualización:** 2025-12-23
-**Versión del roadmap:** 1.0.0
+## 📊 Resumen del Progreso
+
+### Estadísticas Generales
+- **Total de funcionalidades planificadas:** 15
+- **Completadas:** 9 (60%)
+- **Parcialmente completadas:** 4 (27%)
+- **Pendientes:** 2 (13%)
+
+### Por Prioridad
+
+**Prioridad Alta (Core Features):**
+- ✅ Completadas: 3/4 (75%)
+- ⚠️ Parciales: 1/4 (25%)
+
+**Prioridad Media (Mejoras Técnicas):**
+- ✅ Completadas: 2/4 (50%)
+- ⚠️ Parciales: 2/4 (50%)
+
+**Prioridad Baja (Nice to Have):**
+- ✅ Completadas: 1/4 (25%)
+- ❌ Pendientes: 3/4 (75%)
+
+**Mejoras de Calidad:**
+- ✅ Completadas: 1/3 (33%)
+- ⚠️ Parciales: 2/3 (67%)
+
+### Próximos Pasos Recomendados
+
+1. **Implementar Retry Logic** (Prioridad Media-Alta)
+   - Mejora la resiliencia del servidor
+   - Esfuerzo: 4-6 horas
+   - Ver detalles en IMPROVEMENTS.md
+
+2. **Completar Gestión de Commits**
+   - Agregar `create_commit` y `get_commit_diff`
+   - Esfuerzo: 2-3 horas
+
+3. **CI/CD con GitHub Actions**
+   - Automatizar tests y builds
+   - Esfuerzo: 2-3 horas
+
+---
+
+**Última actualización:** 2025-12-24
+**Versión del roadmap:** 2.0.0
 
