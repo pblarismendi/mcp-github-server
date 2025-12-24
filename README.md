@@ -39,6 +39,11 @@ Un servidor completo de Model Context Protocol (MCP) para interactuar con GitHub
 - ✅ **Listar branches** de repositorios
 - ✅ **Leer contenido de archivos** y directorios
 
+### Gestión de Commits 🆕
+- ✅ **Obtener detalles de un commit** específico (con estadísticas y archivos)
+- ✅ **Listar commits** de un repositorio o branch con filtros avanzados
+- ✅ **Comparar commits o branches** y ver diferencias completas
+
 ### Usuario
 - ✅ **Obtener información del usuario** autenticado
 
@@ -501,6 +506,93 @@ Lista las ramas de un repositorio.
 - `protected` (opcional): filtrar solo ramas protegidas (boolean)
 - `per_page` (opcional): número de resultados (default: 30)
 - `page` (opcional): número de página (default: 1)
+
+### `get_commit` 🆕
+Obtiene detalles completos de un commit específico, incluyendo estadísticas y archivos modificados.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `ref` (requerido): SHA del commit, branch o tag
+
+**Retorna:** Información completa del commit incluyendo:
+- Mensaje, autor, committer
+- Estadísticas (additions, deletions, total)
+- Lista de archivos modificados con diffs
+- Padres del commit
+
+**Ejemplo:**
+```json
+{
+  "name": "get_commit",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "ref": "abc123def456"
+  }
+}
+```
+
+### `list_commits` 🆕
+Lista commits de un repositorio o branch específico con filtros avanzados.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `sha` (opcional): SHA o branch para listar commits (default: rama principal)
+- `author` (opcional): filtrar por autor (usuario de GitHub)
+- `since` (opcional): fecha desde (ISO 8601, ej: `"2024-01-01T00:00:00Z"`)
+- `until` (opcional): fecha hasta (ISO 8601, ej: `"2024-12-31T23:59:59Z"`)
+- `path` (opcional): filtrar commits que afectan un archivo o directorio específico
+- `per_page` (opcional): número de resultados (default: 30)
+- `page` (opcional): número de página (default: 1)
+
+**Ejemplos:**
+```json
+{
+  "name": "list_commits",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "sha": "main",
+    "author": "pblarismendi",
+    "since": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+### `compare_commits` 🆕
+Compara dos commits o branches y muestra las diferencias, estadísticas y archivos modificados.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `base` (requerido): SHA o branch base (commit anterior)
+- `head` (requerido): SHA o branch head (commit nuevo)
+
+**Retorna:** Comparación completa incluyendo:
+- Estado de la comparación (ahead_by, behind_by)
+- Lista de commits entre base y head
+- Archivos modificados con diffs
+- Estadísticas de cambios
+
+**Ejemplo:**
+```json
+{
+  "name": "compare_commits",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "base": "main",
+    "head": "feature/new-feature"
+  }
+}
+```
+
+**Uso común:**
+- Comparar dos branches: `base: "main"`, `head: "develop"`
+- Comparar dos commits: `base: "abc123"`, `head: "def456"`
+- Ver cambios de un PR: comparar base branch con head branch
 
 ### `get_file_content`
 Obtiene el contenido de un archivo o lista el contenido de un directorio.

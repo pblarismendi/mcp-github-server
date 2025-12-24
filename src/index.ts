@@ -232,6 +232,103 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "get_commit",
+        description: "Obtiene detalles de un commit específico",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            ref: {
+              type: "string",
+              description: "SHA del commit, branch o tag",
+            },
+          },
+          required: ["owner", "repo", "ref"],
+        },
+      },
+      {
+        name: "list_commits",
+        description: "Lista commits de un repositorio o branch específico",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            sha: {
+              type: "string",
+              description: "SHA o branch para listar commits (default: rama principal)",
+            },
+            author: {
+              type: "string",
+              description: "Filtrar por autor (usuario de GitHub)",
+            },
+            since: {
+              type: "string",
+              description: "Fecha desde (ISO 8601, ej: 2024-01-01T00:00:00Z)",
+            },
+            until: {
+              type: "string",
+              description: "Fecha hasta (ISO 8601, ej: 2024-12-31T23:59:59Z)",
+            },
+            path: {
+              type: "string",
+              description: "Filtrar commits que afectan un archivo o directorio específico",
+            },
+            per_page: {
+              type: "number",
+              default: 30,
+              minimum: 1,
+              maximum: 100,
+            },
+            page: {
+              type: "number",
+              default: 1,
+              minimum: 1,
+            },
+          },
+          required: ["owner", "repo"],
+        },
+      },
+      {
+        name: "compare_commits",
+        description: "Compara dos commits o branches y muestra las diferencias",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            base: {
+              type: "string",
+              description: "SHA o branch base (commit anterior)",
+            },
+            head: {
+              type: "string",
+              description: "SHA o branch head (commit nuevo)",
+            },
+          },
+          required: ["owner", "repo", "base", "head"],
+        },
+      },
+      {
         name: "get_file_content",
         description: "Obtiene el contenido de un archivo específico de un repositorio",
         inputSchema: {
@@ -1041,6 +1138,209 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   total: branches.length,
                   page,
                   branches,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "get_commit": {
+        const { owner, repo, ref } = args as {
+          owner: string;
+          repo: string;
+          ref: string;
+        };
+
+        const response = await octokit.repos.getCommit({
+          owner,
+          repo,
+          ref,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  sha: response.data.sha,
+                  message: response.data.commit.message,
+                  author: {
+                    name: response.data.commit.author?.name || null,
+                    email: response.data.commit.author?.email || null,
+                    date: response.data.commit.author?.date || null,
+                    login: response.data.author?.login || null,
+                  },
+                  committer: {
+                    name: response.data.commit.committer?.name || null,
+                    email: response.data.commit.committer?.email || null,
+                    date: response.data.commit.committer?.date || null,
+                    login: response.data.committer?.login || null,
+                  },
+                  tree: {
+                    sha: response.data.commit.tree.sha,
+                    url: response.data.commit.tree.url,
+                  },
+                  parents: response.data.parents.map((p) => ({
+                    sha: p.sha,
+                    url: p.url,
+                  })),
+                  stats: {
+                    additions: response.data.stats?.additions || 0,
+                    deletions: response.data.stats?.deletions || 0,
+                    total: response.data.stats?.total || 0,
+                  },
+                  files: response.data.files?.map((file) => ({
+                    filename: file.filename,
+                    additions: file.additions,
+                    deletions: file.deletions,
+                    changes: file.changes,
+                    status: file.status,
+                    sha: file.sha,
+                    blob_url: file.blob_url,
+                    patch: file.patch || null,
+                  })) || [],
+                  html_url: response.data.html_url,
+                  url: response.data.url,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "list_commits": {
+        const {
+          owner,
+          repo,
+          sha,
+          author,
+          since,
+          until,
+          path,
+          per_page = 30,
+          page = 1,
+        } = args as any;
+
+        const params: any = {
+          owner,
+          repo,
+          per_page: Math.min(per_page, 100),
+          page,
+        };
+
+        if (sha) params.sha = sha;
+        if (author) params.author = author;
+        if (since) params.since = since;
+        if (until) params.until = until;
+        if (path) params.path = path;
+
+        const response = await octokit.repos.listCommits(params);
+
+        const commits = response.data.map((commit) => ({
+          sha: commit.sha,
+          message: commit.commit.message,
+          author: {
+            name: commit.commit.author?.name || null,
+            email: commit.commit.author?.email || null,
+            date: commit.commit.author?.date || null,
+            login: commit.author?.login || null,
+          },
+          committer: {
+            name: commit.commit.committer?.name || null,
+            email: commit.commit.committer?.email || null,
+            date: commit.commit.committer?.date || null,
+            login: commit.committer?.login || null,
+          },
+          parents: commit.parents.map((p) => ({
+            sha: p.sha,
+            url: p.url,
+          })),
+          html_url: commit.html_url,
+          url: commit.url,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  total: commits.length,
+                  page,
+                  commits,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "compare_commits": {
+        const { owner, repo, base, head } = args as {
+          owner: string;
+          repo: string;
+          base: string;
+          head: string;
+        };
+
+        const response = await octokit.repos.compareCommits({
+          owner,
+          repo,
+          base,
+          head,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  status: response.data.status,
+                  ahead_by: response.data.ahead_by,
+                  behind_by: response.data.behind_by,
+                  total_commits: response.data.total_commits,
+                  base_commit: {
+                    sha: response.data.base_commit.sha,
+                    message: response.data.base_commit.commit.message,
+                    author: response.data.base_commit.commit.author?.name || null,
+                    date: response.data.base_commit.commit.author?.date || null,
+                  },
+                  merge_base_commit: response.data.merge_base_commit
+                    ? {
+                        sha: response.data.merge_base_commit.sha,
+                        message: response.data.merge_base_commit.commit.message,
+                      }
+                    : null,
+                  commits: response.data.commits.map((commit) => ({
+                    sha: commit.sha,
+                    message: commit.commit.message,
+                    author: {
+                      name: commit.commit.author?.name || null,
+                      email: commit.commit.author?.email || null,
+                      date: commit.commit.author?.date || null,
+                      login: commit.author?.login || null,
+                    },
+                    html_url: commit.html_url,
+                  })),
+                  files: response.data.files?.map((file) => ({
+                    filename: file.filename,
+                    status: file.status,
+                    additions: file.additions,
+                    deletions: file.deletions,
+                    changes: file.changes,
+                    blob_url: file.blob_url,
+                    patch: file.patch || null,
+                  })) || [],
+                  html_url: response.data.html_url,
                 },
                 null,
                 2
