@@ -21,9 +21,13 @@ Un servidor completo de Model Context Protocol (MCP) para interactuar con GitHub
 - ✅ **Buscar usuarios** por ubicación, lenguaje, seguidores, etc.
 - ✅ **Buscar commits** por mensaje, autor, fecha, etc.
 
-### Issues
+### Issues (CRUD Completo) 🆕
 - ✅ **Listar issues** con filtros avanzados
 - ✅ **Crear issues** con labels y asignados
+- ✅ **Actualizar issues** (título, cuerpo, estado, labels, asignados)
+- ✅ **Cerrar issues**
+- ✅ **Agregar comentarios** a issues
+- ✅ **Listar comentarios** de un issue
 
 ### Pull Requests (Gestión Completa) 🆕
 - ✅ **Listar pull requests** con filtros
@@ -50,6 +54,14 @@ Un servidor completo de Model Context Protocol (MCP) para interactuar con GitHub
 - ✅ **Crear releases** (con soporte para drafts y prereleases)
 - ✅ **Listar tags** de un repositorio
 - ✅ **Crear tags** en commits específicos
+
+### Webhooks 🆕
+- ✅ **Listar webhooks** de un repositorio
+- ✅ **Obtener detalles de un webhook** específico
+- ✅ **Crear webhooks** con configuración completa
+- ✅ **Actualizar webhooks** existentes
+- ✅ **Eliminar webhooks**
+- ✅ **Ping a webhooks** para verificar funcionamiento
 
 ### Usuario
 - ✅ **Obtener información del usuario** autenticado

@@ -1086,6 +1086,198 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["owner", "repo", "tag", "message"],
         },
       },
+      {
+        name: "list_webhooks",
+        description: "Lista los webhooks de un repositorio",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            per_page: {
+              type: "number",
+              default: 30,
+              minimum: 1,
+              maximum: 100,
+            },
+            page: {
+              type: "number",
+              default: 1,
+              minimum: 1,
+            },
+          },
+          required: ["owner", "repo"],
+        },
+      },
+      {
+        name: "get_webhook",
+        description: "Obtiene detalles de un webhook específico",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            hook_id: {
+              type: "number",
+              description: "ID del webhook",
+            },
+          },
+          required: ["owner", "repo", "hook_id"],
+        },
+      },
+      {
+        name: "create_webhook",
+        description: "Crea un nuevo webhook en un repositorio",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            url: {
+              type: "string",
+              description: "URL del webhook (endpoint que recibirá los eventos)",
+            },
+            content_type: {
+              type: "string",
+              enum: ["json", "form"],
+              description: "Tipo de contenido (default: 'json')",
+              default: "json",
+            },
+            secret: {
+              type: "string",
+              description: "Secreto para firmar los payloads (opcional pero recomendado)",
+            },
+            insecure_ssl: {
+              type: "string",
+              enum: ["0", "1"],
+              description: "Permitir certificados SSL no verificados (0=no, 1=sí, default: '0')",
+              default: "0",
+            },
+            events: {
+              type: "array",
+              items: { type: "string" },
+              description: "Eventos a suscribir (ej: ['push', 'pull_request']). Si no se especifica, se suscribe a todos",
+            },
+            active: {
+              type: "boolean",
+              description: "Si el webhook está activo (default: true)",
+              default: true,
+            },
+          },
+          required: ["owner", "repo", "url"],
+        },
+      },
+      {
+        name: "update_webhook",
+        description: "Actualiza un webhook existente",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            hook_id: {
+              type: "number",
+              description: "ID del webhook",
+            },
+            url: {
+              type: "string",
+              description: "Nueva URL del webhook",
+            },
+            content_type: {
+              type: "string",
+              enum: ["json", "form"],
+              description: "Tipo de contenido",
+            },
+            secret: {
+              type: "string",
+              description: "Nuevo secreto para firmar los payloads",
+            },
+            insecure_ssl: {
+              type: "string",
+              enum: ["0", "1"],
+              description: "Permitir certificados SSL no verificados",
+            },
+            events: {
+              type: "array",
+              items: { type: "string" },
+              description: "Nuevos eventos a suscribir",
+            },
+            active: {
+              type: "boolean",
+              description: "Si el webhook está activo",
+            },
+          },
+          required: ["owner", "repo", "hook_id"],
+        },
+      },
+      {
+        name: "delete_webhook",
+        description: "Elimina un webhook de un repositorio",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            hook_id: {
+              type: "number",
+              description: "ID del webhook",
+            },
+          },
+          required: ["owner", "repo", "hook_id"],
+        },
+      },
+      {
+        name: "ping_webhook",
+        description: "Envía un ping a un webhook para verificar que funciona",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            hook_id: {
+              type: "number",
+              description: "ID del webhook",
+            },
+          },
+          required: ["owner", "repo", "hook_id"],
+        },
+      },
     ],
   };
 });
@@ -2724,6 +2916,244 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                   object: tagResponse.data.object.sha,
                   object_type: tagResponse.data.object.type,
                   url: tagResponse.data.url,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "list_webhooks": {
+        const { owner, repo } = validateOwnerRepo(args as any);
+        const { per_page = 30, page = 1 } = args as any;
+        const validatedPerPage = validatePositiveNumber(per_page, "per_page", 1, 100);
+        const validatedPage = validatePositiveNumber(page, "page", 1);
+
+        const response = await octokit.repos.listWebhooks({
+          owner,
+          repo,
+          per_page: validatedPerPage,
+          page: validatedPage,
+        });
+
+        const webhooks = response.data.map((webhook) => ({
+          id: webhook.id,
+          url: webhook.url,
+          active: webhook.active,
+          events: webhook.events,
+          config: {
+            url: webhook.config.url,
+            content_type: webhook.config.content_type,
+            insecure_ssl: webhook.config.insecure_ssl,
+            secret: webhook.config.secret ? "***" : null, // No exponer el secreto
+          },
+          created_at: webhook.created_at,
+          updated_at: webhook.updated_at,
+          test_url: webhook.test_url,
+          ping_url: webhook.ping_url,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  total: webhooks.length,
+                  page: validatedPage,
+                  webhooks,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "get_webhook": {
+        const { owner, repo } = validateOwnerRepo(args as any);
+        const hook_id = validatePositiveNumber((args as any).hook_id, "hook_id", 1);
+
+        const response = await octokit.repos.getWebhook({
+          owner,
+          repo,
+          hook_id,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  id: response.data.id,
+                  url: response.data.url,
+                  active: response.data.active,
+                  events: response.data.events,
+                  config: {
+                    url: response.data.config.url,
+                    content_type: response.data.config.content_type,
+                    insecure_ssl: response.data.config.insecure_ssl,
+                    secret: response.data.config.secret ? "***" : null,
+                  },
+                  created_at: response.data.created_at,
+                  updated_at: response.data.updated_at,
+                  test_url: response.data.test_url,
+                  ping_url: response.data.ping_url,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "create_webhook": {
+        const { owner, repo } = validateOwnerRepo(args as any);
+        const url = validateString((args as any).url, "url", true);
+        const {
+          content_type = "json",
+          secret,
+          insecure_ssl = "0",
+          events,
+          active = true,
+        } = args as any;
+
+        const config: any = {
+          url,
+          content_type: content_type as "json" | "form",
+        };
+
+        if (secret) config.secret = secret;
+        if (insecure_ssl) config.insecure_ssl = insecure_ssl;
+
+        const params: any = {
+          owner,
+          repo,
+          config,
+          active,
+        };
+
+        if (events && events.length > 0) {
+          params.events = events;
+        }
+
+        const response = await octokit.repos.createWebhook(params);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  id: response.data.id,
+                  url: response.data.url,
+                  active: response.data.active,
+                  events: response.data.events,
+                  created_at: response.data.created_at,
+                  ping_url: response.data.ping_url,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "update_webhook": {
+        const { owner, repo } = validateOwnerRepo(args as any);
+        const hook_id = validatePositiveNumber((args as any).hook_id, "hook_id", 1);
+        const { url, content_type, secret, insecure_ssl, events, active } = args as any;
+
+        const params: any = {
+          owner,
+          repo,
+          hook_id,
+        };
+
+        if (url || content_type || secret !== undefined || insecure_ssl !== undefined) {
+          params.config = {};
+          if (url) params.config.url = url;
+          if (content_type) params.config.content_type = content_type;
+          if (secret !== undefined) params.config.secret = secret;
+          if (insecure_ssl !== undefined) params.config.insecure_ssl = insecure_ssl;
+        }
+
+        if (events !== undefined) params.events = events;
+        if (active !== undefined) params.active = active;
+
+        const response = await octokit.repos.updateWebhook(params);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  id: response.data.id,
+                  url: response.data.url,
+                  active: response.data.active,
+                  events: response.data.events,
+                  updated_at: response.data.updated_at,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "delete_webhook": {
+        const { owner, repo } = validateOwnerRepo(args as any);
+        const hook_id = validatePositiveNumber((args as any).hook_id, "hook_id", 1);
+
+        await octokit.repos.deleteWebhook({
+          owner,
+          repo,
+          hook_id,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: `Webhook ${hook_id} eliminado correctamente`,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "ping_webhook": {
+        const { owner, repo } = validateOwnerRepo(args as any);
+        const hook_id = validatePositiveNumber((args as any).hook_id, "hook_id", 1);
+
+        await octokit.repos.pingWebhook({
+          owner,
+          repo,
+          hook_id,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  success: true,
+                  message: `Ping enviado al webhook ${hook_id}`,
                 },
                 null,
                 2
