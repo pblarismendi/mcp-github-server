@@ -148,6 +148,34 @@ npm run build
 pnpm build
 ```
 
+## 🧪 Testing
+
+Ejecuta los tests (requiere instalar dependencias de testing primero):
+
+```bash
+# Instalar dependencias de testing
+pnpm add -D vitest @vitest/ui
+# o
+npm install --save-dev vitest @vitest/ui
+
+# Ejecutar tests
+pnpm test
+# o
+npm test
+
+# Ejecutar tests una vez
+pnpm test:run
+# o
+npm run test:run
+
+# Ver cobertura de código
+pnpm test:coverage
+# o
+npm run test:coverage
+```
+
+**Nota:** Los tests usan mocks y **no afectan repositorios reales**. Ver [TESTING.md](./TESTING.md) para más detalles.
+
 Esto generará los archivos JavaScript en la carpeta `dist/` que son compatibles con todos los sistemas operativos.
 
 ### Verificar la Compilación

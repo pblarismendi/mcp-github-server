@@ -13,9 +13,10 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "types": ["vitest/globals", "node"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/**/*.test.ts"],
   "exclude": ["node_modules", "dist"]
 }
 
