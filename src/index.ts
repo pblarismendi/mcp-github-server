@@ -10,6 +10,10 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { Octokit } from "@octokit/rest";
 import dotenv from "dotenv";
+import { formatErrorResponse } from "./utils/error-handler.js";
+import { logger } from "./utils/logger.js";
+import { cache, getCacheKey, CACHE_TTL } from "./utils/cache.js";
+import { validateOwnerRepo, validatePositiveNumber, validateString } from "./utils/validation.js";
 
 // Cargar variables de entorno
 dotenv.config();
@@ -963,8 +967,11 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 // Manejar llamadas a herramientas
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
+  const startTime = Date.now();
 
   try {
+    logger.toolStart(name, args);
+
     switch (name) {
       case "list_repositories": {
         const {
@@ -976,11 +983,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           page = 1,
         } = args as any;
 
+        // Validar parámetros
+        const validatedPerPage = validatePositiveNumber(per_page, "per_page", 1, 100);
+        const validatedPage = validatePositiveNumber(page, "page", 1);
+
+        // Verificar caché
+        const cacheKey = getCacheKey("repos", "list", visibility || "all", type, sort, direction, validatedPage.toString());
+        const cached = cache.get(cacheKey);
+        if (cached) {
+          logger.debug("Cache hit for list_repositories", { cacheKey });
+          return cached;
+        }
+
         const params: any = {
           sort: sort as "created" | "updated" | "pushed" | "full_name",
           direction: direction as "asc" | "desc",
-          per_page: Math.min(per_page, 100),
-          page,
+          per_page: validatedPerPage,
+          page: validatedPage,
         };
 
         // GitHub API: no se pueden usar visibility y type simultáneamente
@@ -1025,14 +1044,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ssh_url: repo.ssh_url,
         }));
 
-        return {
+        const result = {
           content: [
             {
               type: "text",
               text: JSON.stringify(
                 {
                   total: repos.length,
-                  page,
+                  page: validatedPage,
                   repositories: repos,
                 },
                 null,
@@ -1041,10 +1060,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+
+        // Guardar en caché
+        cache.set(cacheKey, result, CACHE_TTL.REPOSITORY_LIST);
+        return result;
       }
 
       case "get_repository": {
-        const { owner, repo } = args as { owner: string; repo: string };
+        const { owner, repo } = validateOwnerRepo(args as any);
+
+        // Verificar caché
+        const cacheKey = getCacheKey("repo", "details", owner, repo);
+        const cached = cache.get(cacheKey);
+        if (cached) {
+          logger.debug("Cache hit for get_repository", { cacheKey });
+          return cached;
+        }
+
         const response = await octokit.repos.get({ owner, repo });
 
         return {
@@ -1179,21 +1211,21 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 pull_number: pr.number,
               });
               return {
-                number: pr.number,
-                title: pr.title,
-                body: pr.body || "",
-                state: pr.state,
+          number: pr.number,
+          title: pr.title,
+          body: pr.body || "",
+          state: pr.state,
                 user: pr.user?.login || null,
-                head: {
-                  ref: pr.head.ref,
-                  sha: pr.head.sha,
-                  repo: pr.head.repo?.full_name,
-                },
-                base: {
-                  ref: pr.base.ref,
-                  sha: pr.base.sha,
-                  repo: pr.base.repo?.full_name,
-                },
+          head: {
+            ref: pr.head.ref,
+            sha: pr.head.sha,
+            repo: pr.head.repo?.full_name,
+          },
+          base: {
+            ref: pr.base.ref,
+            sha: pr.base.sha,
+            repo: pr.base.repo?.full_name,
+          },
                 merged: prDetail.data.merged ?? false,
                 mergeable: prDetail.data.mergeable ?? null,
                 mergeable_state: prDetail.data.mergeable_state ?? null,
@@ -1203,11 +1235,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 additions: prDetail.data.additions ?? 0,
                 deletions: prDetail.data.deletions ?? 0,
                 changed_files: prDetail.data.changed_files ?? 0,
-                created_at: pr.created_at,
-                updated_at: pr.updated_at,
-                closed_at: pr.closed_at,
+          created_at: pr.created_at,
+          updated_at: pr.updated_at,
+          closed_at: pr.closed_at,
                 merged_at: prDetail.data.merged_at,
-                html_url: pr.html_url,
+          html_url: pr.html_url,
               };
             } catch (error) {
               // Si falla obtener detalles, devolver información básica
@@ -1276,8 +1308,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const response = await octokit.repos.listBranches({
           owner,
           repo,
-          per_page: Math.min(per_page, 100),
-          page,
+          per_page: validatedPerPage,
+          page: validatedPage,
         });
 
         let branches = response.data.map((branch) => ({
@@ -1293,14 +1325,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           branches = branches.filter((b) => b.protected);
         }
 
-        return {
+        const result = {
           content: [
             {
               type: "text",
               text: JSON.stringify(
                 {
                   total: branches.length,
-                  page,
+                  page: validatedPage,
                   branches,
                 },
                 null,
@@ -1309,6 +1341,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+
+        // Guardar en caché
+        cache.set(cacheKey, result, CACHE_TTL.BRANCHES);
+        return result;
       }
 
       case "get_commit": {
@@ -1563,9 +1599,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           if ("content" in response.data && "encoding" in response.data) {
             encoding = response.data.encoding;
             if (response.data.encoding === "base64") {
-              content = Buffer.from(response.data.content, "base64").toString(
-                "utf-8"
-              );
+            content = Buffer.from(response.data.content, "base64").toString(
+              "utf-8"
+            );
             }
           }
 
@@ -1883,9 +1919,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "get_user_info": {
+        // Verificar caché
+        const cacheKey = getCacheKey("user", "info");
+        const cached = cache.get(cacheKey);
+        if (cached) {
+          logger.debug("Cache hit for get_user_info", { cacheKey });
+          return cached;
+        }
+
         const response = await octokit.users.getAuthenticated();
 
-        return {
+        const result = {
           content: [
             {
               type: "text",
@@ -1913,17 +1957,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+
+        // Guardar en caché
+        cache.set(cacheKey, result, CACHE_TTL.USER_INFO);
+        return result;
       }
 
       case "create_issue": {
-        const {
-          owner,
-          repo,
-          title,
-          body,
-          labels,
-          assignees,
-        } = args as any;
+        const { owner, repo } = validateOwnerRepo(args as any);
+        const title = validateString(args.title, "title", true);
+        const body = validateString(args.body, "body", false);
+        const { labels, assignees } = args as any;
 
         const params: any = {
           owner,
@@ -2024,10 +2068,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           pull_number,
         });
 
-        return {
-          content: [
-            {
-              type: "text",
+    return {
+      content: [
+        {
+          type: "text",
               text: JSON.stringify(
                 {
                   number: response.data.number,
@@ -2093,10 +2137,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
         const response = await octokit.pulls.merge(params);
 
-        return {
-          content: [
-            {
-              type: "text",
+    return {
+      content: [
+        {
+          type: "text",
               text: JSON.stringify(
                 {
                   merged: response.data.merged,
@@ -2560,15 +2604,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         throw new Error(`Herramienta desconocida: ${name}`);
     }
   } catch (error: any) {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Error: ${error.message || String(error)}`,
-        },
-      ],
-      isError: true,
-    };
+    const duration = Date.now() - startTime;
+    logger.error(`Error in tool ${name}`, error, { tool: name, duration });
+    return formatErrorResponse(error);
+  } finally {
+    const duration = Date.now() - startTime;
+    logger.toolEnd(name, duration, true);
   }
 });
 
@@ -2671,6 +2712,18 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
+  
+  logger.info("Servidor MCP de GitHub iniciado y listo", {
+    version: "1.0.0",
+    cacheEnabled: true,
+  });
+  
+  // Limpiar caché periódicamente (cada 10 minutos)
+  setInterval(() => {
+    cache.cleanup();
+    logger.debug("Cache cleanup completed", { stats: cache.getStats() });
+  }, 10 * 60 * 1000);
+  
   console.error("🚀 Servidor MCP de GitHub iniciado y listo");
 }
 
