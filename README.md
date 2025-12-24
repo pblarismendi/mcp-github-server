@@ -741,6 +741,88 @@ Crea un tag en un repositorio (sin crear release).
 }
 ```
 
+### `list_webhooks` 🆕
+Lista los webhooks de un repositorio.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `per_page` (opcional): número de resultados (default: 30)
+- `page` (opcional): número de página (default: 1)
+
+**Ejemplo:**
+```json
+{
+  "name": "list_webhooks",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server"
+  }
+}
+```
+
+### `get_webhook` 🆕
+Obtiene detalles de un webhook específico.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `hook_id` (requerido): ID del webhook
+
+### `create_webhook` 🆕
+Crea un nuevo webhook en un repositorio.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `url` (requerido): URL del webhook (endpoint que recibirá los eventos)
+- `content_type` (opcional): `"json"` o `"form"` (default: `"json"`)
+- `secret` (opcional): secreto para firmar los payloads (recomendado)
+- `insecure_ssl` (opcional): `"0"` o `"1"` para SSL no verificado (default: `"0"`)
+- `events` (opcional): array de eventos (ej: `["push", "pull_request"]`). Si no se especifica, se suscribe a todos
+- `active` (opcional): si el webhook está activo (default: `true`)
+
+**Ejemplo:**
+```json
+{
+  "name": "create_webhook",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "url": "https://example.com/webhook",
+    "content_type": "json",
+    "secret": "my-secret-key",
+    "events": ["push", "pull_request"],
+    "active": true
+  }
+}
+```
+
+### `update_webhook` 🆕
+Actualiza un webhook existente.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `hook_id` (requerido): ID del webhook
+- `url`, `content_type`, `secret`, `insecure_ssl`, `events`, `active` (opcionales): nuevos valores
+
+### `delete_webhook` 🆕
+Elimina un webhook de un repositorio.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `hook_id` (requerido): ID del webhook
+
+### `ping_webhook` 🆕
+Envía un ping a un webhook para verificar que funciona.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `hook_id` (requerido): ID del webhook
+
 ### `get_file_content`
 Obtiene el contenido de un archivo o lista el contenido de un directorio.
 
