@@ -207,6 +207,28 @@ npm run test:coverage
 
 **Nota:** Los tests usan mocks y **no afectan repositorios reales**. Ver [TESTING.md](./TESTING.md) para más detalles.
 
+## 🔄 CI/CD con GitHub Actions
+
+El proyecto incluye un workflow de GitHub Actions que ejecuta automáticamente los tests en cada Pull Request hacia `main`.
+
+**Workflow:** `.github/workflows/tests.yml`
+
+**Qué hace:**
+- ✅ Ejecuta tests unitarios automáticamente en cada PR
+- ✅ Compila el proyecto para verificar que no hay errores de TypeScript
+- ✅ Genera reportes de coverage
+- ✅ Sube los reportes como artifacts (disponibles por 7 días)
+
+**Cuándo se ejecuta:**
+- Al abrir un Pull Request hacia `main`
+- Al actualizar un Pull Request existente
+- Al hacer push directo a `main`
+
+**Ver resultados:**
+1. Ve a la pestaña "Actions" en GitHub
+2. Haz clic en el workflow "Unit Tests"
+3. Revisa los resultados y descarga los artifacts si necesitas los reportes de coverage
+
 Esto generará los archivos JavaScript en la carpeta `dist/` que son compatibles con todos los sistemas operativos.
 
 ### Verificar la Compilación
