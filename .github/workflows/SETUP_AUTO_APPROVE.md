@@ -1,10 +1,12 @@
-# 🔧 Configuración de Auto-aprobación de PRs
+# 🔧 Configuración de Auto-merge de PRs
 
 ## 📋 Resumen
 
-El workflow `auto-approve.yml` puede auto-aprobar PRs del dueño del repositorio. Sin embargo, GitHub Actions no puede aprobar PRs directamente por seguridad, por lo que necesitas configurar un Personal Access Token (PAT) opcional.
+El workflow `auto-approve.yml` puede mergear automáticamente los PRs del dueño del repositorio después de que pasen los tests. 
 
-## 🚀 Opción 1: Con PAT (Auto-aprobación completa)
+**⚠️ Importante**: GitHub no permite que un usuario apruebe su propio PR (incluso con PAT), por lo que este workflow mergea automáticamente el PR en lugar de aprobarlo.
+
+## 🚀 Opción 1: Con PAT (Auto-merge completo)
 
 ### Pasos:
 
@@ -12,7 +14,7 @@ El workflow `auto-approve.yml` puede auto-aprobar PRs del dueño del repositorio
    - Ve a GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
    - O usa este enlace directo: https://github.com/settings/tokens
    - Haz clic en "Generate new token (classic)"
-   - Dale un nombre descriptivo (ej: "Auto-approve PRs")
+   - Dale un nombre descriptivo (ej: "Auto-merge PRs")
    - Selecciona el scope `repo` (necesitas permisos completos de repositorio)
    - Genera el token y **cópialo inmediatamente** (no podrás verlo de nuevo)
 
@@ -23,11 +25,18 @@ El workflow `auto-approve.yml` puede auto-aprobar PRs del dueño del repositorio
    - Valor: Pega el token que copiaste
    - Guarda el secret
 
-3. **Listo**: Ahora el workflow auto-aprobará tus PRs automáticamente
+3. **Listo**: Ahora el workflow mergeará automáticamente tus PRs después de que pasen los tests
+
+### Cómo funciona:
+
+- El workflow espera a que todos los tests pasen
+- Una vez que los tests pasan, mergea automáticamente el PR usando `squash merge`
+- Solo funciona para PRs creados por el dueño del repositorio
+- Los PRs de otros colaboradores siguen requiriendo aprobación manual
 
 ## 🚀 Opción 2: Sin PAT (Solo comentario)
 
-Si no configuras el PAT, el workflow simplemente agregará un comentario al PR indicando que está listo para mergear. Tendrás que aprobarlo manualmente, pero al menos sabrás que está listo.
+Si no configuras el PAT, el workflow simplemente agregará un comentario al PR indicando que está listo para mergear. Tendrás que mergearlo manualmente después de aprobarlo.
 
 ## ⚠️ Consideraciones de Seguridad
 
@@ -36,15 +45,21 @@ Si no configuras el PAT, el workflow simplemente agregará un comentario al PR i
 - **No compartas el token**: Manténlo seguro y nunca lo subas al código
 - **Revoca el token si es comprometido**: Si sospechas que fue expuesto, revócalo inmediatamente
 
-## 🔄 Alternativa: Cambiar Protección de Rama
+## ⚠️ Limitación de GitHub
 
-Si prefieres no usar PAT, puedes cambiar la protección de rama para permitir que el dueño pueda mergear sin aprobación:
+GitHub no permite que un usuario apruebe su propio PR, incluso usando un PAT. Por esta razón, este workflow:
+- **No intenta aprobar** el PR (fallaría con error 422)
+- **Mergea automáticamente** el PR después de que pasen los tests
+- Esto requiere que la protección de rama permita mergear sin aprobación si el autor es el dueño
 
-1. Ve a Settings → Branches → Protección de rama `main`
-2. En "Restrict who can push to matching branches", agrega tu usuario como excepción
-3. O desactiva temporalmente "Require pull request reviews" para tus propios PRs
+### Configuración de Protección de Rama Recomendada
 
-**Nota**: Esta opción reduce la seguridad, ya que permite mergear sin revisión.
+Para que el auto-merge funcione correctamente, la protección de rama debe:
+- ✅ Requerir PR antes de mergear
+- ✅ Requerir que los tests pasen (status checks)
+- ⚠️ **Permitir mergear sin aprobación** si el autor es el dueño del repositorio (esto se puede hacer agregando una excepción)
+
+**Alternativa**: Si prefieres mantener la protección estricta, simplemente aprueba y mergea manualmente cuando veas el comentario del workflow.
 
 ## 📚 Referencias
 
