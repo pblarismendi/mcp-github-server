@@ -6,33 +6,48 @@ GitHub Pages está **disponible** para tu repositorio. He creado la configuraci�
 
 ## 🚀 Pasos para Activar GitHub Pages
 
-### Opción 1: Activación Manual (Recomendado)
+### ⚠️ IMPORTANTE: Debes habilitar GitHub Pages PRIMERO
+
+**Antes de ejecutar el workflow, debes habilitar GitHub Pages manualmente:**
+
+### Paso 1: Habilitar GitHub Pages (OBLIGATORIO)
 
 1. **Ve a la configuración del repositorio:**
    - https://github.com/pblarismendi/mcp-github-server/settings/pages
 
 2. **Configura la fuente:**
+   - **Source:** Selecciona **"GitHub Actions"** (NO "Deploy from a branch")
+   - Haz clic en "Save"
+
+3. **Espera unos segundos** para que GitHub configure el sitio
+
+### Paso 2: Hacer Push de los Cambios
+
+```bash
+git add docs/ .github/workflows/pages.yml
+git commit -m "feat: Agregar configuración de GitHub Pages"
+git push origin main
+```
+
+### Paso 3: Verificar el Despliegue
+
+1. Ve a la pestaña **"Actions"** en GitHub
+2. Busca el workflow **"Deploy GitHub Pages"**
+3. Espera a que termine (debería tomar 1-2 minutos)
+4. Tu sitio estará disponible en:
+   - `https://pblarismendi.github.io/mcp-github-server/`
+
+## 🔄 Alternativa: Usar Branch en lugar de GitHub Actions
+
+Si prefieres no usar GitHub Actions, puedes usar esta configuración más simple:
+
+1. **Ve a Settings → Pages:**
    - **Source:** Selecciona "Deploy from a branch"
-   - **Branch:** Selecciona `main` o `gh-pages`
+   - **Branch:** Selecciona `main`
    - **Folder:** Selecciona `/docs`
    - Haz clic en "Save"
 
-3. **Espera unos minutos** para que GitHub procese el sitio
-
-4. **Tu sitio estará disponible en:**
-   - `https://pblarismendi.github.io/mcp-github-server/`
-
-### Opción 2: Activación Automática con GitHub Actions
-
-Ya he creado el workflow `.github/workflows/pages.yml` que:
-- ✅ Se ejecuta automáticamente cuando haces push a `main`
-- ✅ Despliega automáticamente la carpeta `/docs` a GitHub Pages
-- ✅ No requiere configuración manual adicional
-
-**Solo necesitas:**
-1. Hacer push de los cambios (incluyendo la carpeta `docs/`)
-2. Ir a Settings → Pages y seleccionar "GitHub Actions" como fuente
-3. El sitio se desplegará automáticamente
+2. **El sitio se desplegará automáticamente** sin necesidad de workflows
 
 ## 📁 Estructura de Archivos
 
