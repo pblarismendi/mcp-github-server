@@ -15,6 +15,7 @@ export default defineConfig({
         '**/*.test.ts',
         '**/*.spec.ts',
         'src/__tests__/**',
+        'src/index.ts', // Excluir index.ts del coverage (código de integración del servidor MCP)
       ],
     },
   },
