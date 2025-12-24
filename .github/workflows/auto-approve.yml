@@ -20,8 +20,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Try auto-approve with PAT
-        if: secrets.GH_PAT != ''
+        continue-on-error: true
         uses: actions/github-script@v7
+        id: try_approve
+        env:
+          PAT_CONFIGURED: ${{ secrets.GH_PAT != '' }}
         with:
           github-token: ${{ secrets.GH_PAT }}
           script: |
@@ -29,21 +32,33 @@ jobs:
             const prAuthor = context.payload.pull_request.user.login;
             const repoOwner = context.repo.owner;
             
+            // Verificar si el PAT está configurado
+            if (process.env.PAT_CONFIGURED !== 'true') {
+              console.log('⚠️ GH_PAT no está configurado, saltando auto-aprobación');
+              process.exit(0);
+            }
+            
             if (prAuthor === repoOwner) {
               console.log(`Auto-aprobando PR #${number} del dueño del repositorio (${prAuthor}) usando PAT`);
               
-              await github.rest.pulls.createReview({
-                owner,
-                repo,
-                pull_number: number,
-                event: 'APPROVE',
-                body: '✅ **Auto-aprobado**: Este PR fue creado por el dueño del repositorio y cumple con los requisitos de calidad.'
-              });
-              
-              console.log(`✅ PR #${number} auto-aprobado exitosamente`);
+              try {
+                await github.rest.pulls.createReview({
+                  owner,
+                  repo,
+                  pull_number: number,
+                  event: 'APPROVE',
+                  body: '✅ **Auto-aprobado**: Este PR fue creado por el dueño del repositorio y cumple con los requisitos de calidad.'
+                });
+                
+                console.log(`✅ PR #${number} auto-aprobado exitosamente`);
+              } catch (error) {
+                console.error(`❌ Error al aprobar PR: ${error.message}`);
+                throw error;
+              }
             }
 
-      - name: Add comment (fallback or no PAT)
+      - name: Add comment (fallback if PAT failed or not configured)
+        if: always() && (steps.try_approve.outcome != 'success' || steps.try_approve.outcome == 'skipped')
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -51,7 +66,6 @@ jobs:
             const { owner, repo, number } = context.issue;
             const prAuthor = context.payload.pull_request.user.login;
             const repoOwner = context.repo.owner;
-            const hasPAT = '${{ secrets.GH_PAT }}' !== '';
             
             if (prAuthor === repoOwner) {
               // Verificar si ya fue aprobado
@@ -66,9 +80,7 @@ jobs:
               if (!isApproved) {
                 console.log(`Agregando comentario al PR #${number} del dueño del repositorio (${prAuthor})`);
                 
-                const commentBody = hasPAT 
-                  ? '✅ **PR listo para mergear**: Este PR fue creado por el dueño del repositorio y está listo para ser mergeado. Puedes aprobarlo manualmente cuando lo revises.'
-                  : `✅ **PR listo para mergear**: Este PR fue creado por el dueño del repositorio y está listo para ser mergeado.\n\n💡 **Para auto-aprobación automática**: Configura un Personal Access Token (PAT) con permisos de \`repo\` como secret \`GH_PAT\` en la configuración del repositorio. Ver [SETUP_AUTO_APPROVE.md](.github/workflows/SETUP_AUTO_APPROVE.md) para más detalles.`;
+                const commentBody = `✅ **PR listo para mergear**: Este PR fue creado por el dueño del repositorio y está listo para ser mergeado.\n\n💡 **Para auto-aprobación automática**: Configura un Personal Access Token (PAT) con permisos de \`repo\` como secret \`GH_PAT\` en la configuración del repositorio. Ver [SETUP_AUTO_APPROVE.md](.github/workflows/SETUP_AUTO_APPROVE.md) para más detalles.`;
                 
                 await github.rest.issues.createComment({
                   owner,
