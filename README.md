@@ -41,6 +41,7 @@ Un servidor completo de Model Context Protocol (MCP) para interactuar con GitHub
 
 ### Git y Branches
 - ✅ **Listar branches** de repositorios
+- ✅ **Proteger ramas** con configuración completa (requiere PRs, aprobaciones, etc.) 🆕
 - ✅ **Leer contenido de archivos** y directorios
 
 ### Gestión de Commits 🆕
@@ -525,6 +526,39 @@ Lista las ramas de un repositorio.
 - `protected` (opcional): filtrar solo ramas protegidas (boolean)
 - `per_page` (opcional): número de resultados (default: 30)
 - `page` (opcional): número de página (default: 1)
+
+### `protect_branch` 🆕
+Protege una rama del repositorio. Requiere PRs para mergear y puede requerir aprobaciones.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `branch` (requerido): nombre de la rama a proteger (ej: `"main"`)
+- `require_pr` (opcional): requerir PR antes de mergear (default: `true`)
+- `required_approvals` (opcional): número de aprobaciones requeridas (default: `1`, mínimo: `1`)
+- `dismiss_stale_reviews` (opcional): descartar aprobaciones obsoletas cuando se agregan nuevos commits (default: `true`)
+- `require_code_owner_reviews` (opcional): requerir revisión de code owners (default: `false`)
+- `enforce_admins` (opcional): aplicar protección también a administradores (default: `true`)
+- `allow_force_pushes` (opcional): permitir force pushes (default: `false`)
+- `allow_deletions` (opcional): permitir eliminar la rama (default: `false`)
+
+**Ejemplo:**
+```json
+{
+  "name": "protect_branch",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "branch": "main",
+    "require_pr": true,
+    "required_approvals": 1,
+    "enforce_admins": true,
+    "allow_force_pushes": false
+  }
+}
+```
+
+**⚠️ Nota de Seguridad:** Esta herramienta modifica la configuración de seguridad del repositorio. Asegúrate de tener los permisos adecuados y revisa cuidadosamente cualquier PR que modifique scripts o herramientas relacionadas con protección de ramas. Ver [SECURITY.md](./SECURITY.md) para más información.
 
 ### `get_commit` 🆕
 Obtiene detalles completos de un commit específico, incluyendo estadísticas y archivos modificados.
@@ -1018,6 +1052,24 @@ Información del usuario autenticado en formato JSON.
 - Asegúrate de haber compilado el proyecto (`npm run build`)
 - Revisa los logs de Cursor/Claude Desktop para ver errores específicos
 - En Windows, verifica que Node.js esté en el PATH del sistema
+
+## 🔒 Seguridad
+
+### ⚠️ Scripts con Información Sensible
+
+Este repositorio incluye scripts de ejemplo genéricos (`protect-branch.example.sh`) que puedes usar como plantilla. **Nunca subas scripts con valores hardcodeados** de repositorios específicos al repositorio público.
+
+**Scripts que están en `.gitignore` y NO deben subirse:**
+- `protect-main-branch.sh` - Contiene valores específicos de repositorio
+- `test-protect-branch.js` - Contiene valores específicos de repositorio
+
+**Mejores prácticas:**
+- ✅ Usa scripts genéricos con variables de entorno
+- ✅ Usa la herramienta MCP `protect_branch` directamente
+- ✅ Revisa cuidadosamente PRs que modifiquen scripts de seguridad
+- ✅ Nunca subas tokens al repositorio (ya están en `.gitignore`)
+
+Para más información sobre seguridad, consulta [SECURITY.md](./SECURITY.md).
 
 ## 👨‍💻 Desarrollador
 

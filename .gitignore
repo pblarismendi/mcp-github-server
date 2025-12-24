@@ -6,3 +6,7 @@ dist/
 *.tsbuildinfo
 coverage/
 .vitest/
+
+# Scripts con información sensible (valores hardcodeados de repositorios específicos)
+protect-main-branch.sh
+test-protect-branch.js
