@@ -586,6 +586,132 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "update_issue",
+        description: "Actualiza un issue existente (título, cuerpo, estado, labels, asignados)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            issue_number: {
+              type: "number",
+              description: "Número del issue",
+            },
+            title: {
+              type: "string",
+              description: "Nuevo título del issue",
+            },
+            body: {
+              type: "string",
+              description: "Nuevo cuerpo del issue en Markdown",
+            },
+            state: {
+              type: "string",
+              enum: ["open", "closed"],
+              description: "Estado del issue",
+            },
+            labels: {
+              type: "array",
+              items: { type: "string" },
+              description: "Nuevas etiquetas (reemplaza las existentes)",
+            },
+            assignees: {
+              type: "array",
+              items: { type: "string" },
+              description: "Nuevos asignados (reemplaza los existentes)",
+            },
+          },
+          required: ["owner", "repo", "issue_number"],
+        },
+      },
+      {
+        name: "close_issue",
+        description: "Cierra un issue",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            issue_number: {
+              type: "number",
+              description: "Número del issue",
+            },
+          },
+          required: ["owner", "repo", "issue_number"],
+        },
+      },
+      {
+        name: "add_issue_comment",
+        description: "Agrega un comentario a un issue",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            issue_number: {
+              type: "number",
+              description: "Número del issue",
+            },
+            body: {
+              type: "string",
+              description: "Contenido del comentario en Markdown",
+            },
+          },
+          required: ["owner", "repo", "issue_number", "body"],
+        },
+      },
+      {
+        name: "list_issue_comments",
+        description: "Lista los comentarios de un issue",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            issue_number: {
+              type: "number",
+              description: "Número del issue",
+            },
+            per_page: {
+              type: "number",
+              default: 30,
+              minimum: 1,
+              maximum: 100,
+            },
+            page: {
+              type: "number",
+              default: 1,
+              minimum: 1,
+            },
+          },
+          required: ["owner", "repo", "issue_number"],
+        },
+      },
+      {
         name: "create_pull_request",
         description: "Crea un nuevo pull request en un repositorio",
         inputSchema: {
@@ -1117,9 +1243,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "list_issues": {
+        const { owner, repo } = validateOwnerRepo(args as any);
         const {
-          owner,
-          repo,
           state = "open",
           labels,
           assignee,
@@ -1127,12 +1252,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           page = 1,
         } = args as any;
 
+        const validatedPerPage = validatePositiveNumber(per_page, "per_page", 1, 100);
+        const validatedPage = validatePositiveNumber(page, "page", 1);
+
         const params: any = {
           owner,
           repo,
           state: state as "open" | "closed" | "all",
-          per_page: Math.min(per_page, 100),
-          page,
+          per_page: validatedPerPage,
+          page: validatedPage,
         };
 
         if (labels) params.labels = labels;
@@ -1166,7 +1294,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
               text: JSON.stringify(
                 {
                   total: issues.length,
-                  page,
+                  page: validatedPage,
                   issues,
                 },
                 null,
@@ -1297,13 +1425,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case "list_branches": {
-        const {
-          owner,
-          repo,
-          protected: protectedOnly,
-          per_page = 30,
-          page = 1,
-        } = args as any;
+        const { owner, repo } = validateOwnerRepo(args as any);
+        const { protected: protectedOnly, per_page = 30, page = 1 } = args as any;
+        const validatedPerPage = validatePositiveNumber(per_page, "per_page", 1, 100);
+        const validatedPage = validatePositiveNumber(page, "page", 1);
+
+        // Verificar caché
+        const cacheKey = getCacheKey("branches", owner, repo, validatedPage.toString());
+        const cached = cache.get(cacheKey);
+        if (cached) {
+          logger.debug("Cache hit for list_branches", { cacheKey });
+          return cached;
+        }
 
         const response = await octokit.repos.listBranches({
           owner,
@@ -1965,8 +2098,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       case "create_issue": {
         const { owner, repo } = validateOwnerRepo(args as any);
-        const title = validateString(args.title, "title", true);
-        const body = validateString(args.body, "body", false);
+        const title = validateString((args as any).title, "title", true);
+        const body = validateString((args as any).body, "body", false);
         const { labels, assignees } = args as any;
 
         const params: any = {
