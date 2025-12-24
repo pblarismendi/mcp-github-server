@@ -792,6 +792,170 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["owner", "repo", "pull_number"],
         },
       },
+      {
+        name: "list_releases",
+        description: "Lista los releases de un repositorio",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            per_page: {
+              type: "number",
+              default: 30,
+              minimum: 1,
+              maximum: 100,
+            },
+            page: {
+              type: "number",
+              default: 1,
+              minimum: 1,
+            },
+          },
+          required: ["owner", "repo"],
+        },
+      },
+      {
+        name: "get_release",
+        description: "Obtiene detalles de un release específico",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            release_id: {
+              type: "number",
+              description: "ID del release",
+            },
+            tag: {
+              type: "string",
+              description: "Tag del release (alternativa a release_id)",
+            },
+          },
+          required: ["owner", "repo"],
+        },
+      },
+      {
+        name: "create_release",
+        description: "Crea un nuevo release en un repositorio",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            tag_name: {
+              type: "string",
+              description: "Nombre del tag (ej: 'v1.0.0')",
+            },
+            name: {
+              type: "string",
+              description: "Nombre del release (default: igual que tag_name)",
+            },
+            body: {
+              type: "string",
+              description: "Descripción del release en Markdown",
+            },
+            draft: {
+              type: "boolean",
+              description: "Si es true, crea el release como draft",
+              default: false,
+            },
+            prerelease: {
+              type: "boolean",
+              description: "Si es true, marca como prerelease",
+              default: false,
+            },
+            target_commitish: {
+              type: "string",
+              description: "SHA o branch para el release (default: rama principal)",
+            },
+          },
+          required: ["owner", "repo", "tag_name"],
+        },
+      },
+      {
+        name: "list_tags",
+        description: "Lista los tags de un repositorio",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            per_page: {
+              type: "number",
+              default: 30,
+              minimum: 1,
+              maximum: 100,
+            },
+            page: {
+              type: "number",
+              default: 1,
+              minimum: 1,
+            },
+          },
+          required: ["owner", "repo"],
+        },
+      },
+      {
+        name: "create_tag",
+        description: "Crea un tag en un repositorio (sin release)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            owner: {
+              type: "string",
+              description: "Propietario del repositorio",
+            },
+            repo: {
+              type: "string",
+              description: "Nombre del repositorio",
+            },
+            tag: {
+              type: "string",
+              description: "Nombre del tag (ej: 'v1.0.0')",
+            },
+            message: {
+              type: "string",
+              description: "Mensaje del tag",
+            },
+            object: {
+              type: "string",
+              description: "SHA del commit a taggear (default: HEAD)",
+            },
+            type: {
+              type: "string",
+              enum: ["commit", "tree", "blob"],
+              description: "Tipo de objeto (default: 'commit')",
+              default: "commit",
+            },
+          },
+          required: ["owner", "repo", "tag", "message"],
+        },
+      },
     ],
   };
 });
@@ -2102,6 +2266,287 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 {
                   total: reviews.length,
                   reviews,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "list_releases": {
+        const {
+          owner,
+          repo,
+          per_page = 30,
+          page = 1,
+        } = args as any;
+
+        const response = await octokit.repos.listReleases({
+          owner,
+          repo,
+          per_page: Math.min(per_page, 100),
+          page,
+        });
+
+        const releases = response.data.map((release) => ({
+          id: release.id,
+          tag_name: release.tag_name,
+          name: release.name || release.tag_name,
+          body: release.body || "",
+          draft: release.draft,
+          prerelease: release.prerelease,
+          author: release.author?.login || null,
+          created_at: release.created_at,
+          published_at: release.published_at,
+          html_url: release.html_url,
+          tarball_url: release.tarball_url,
+          zipball_url: release.zipball_url,
+          assets: release.assets.map((asset) => ({
+            id: asset.id,
+            name: asset.name,
+            size: asset.size,
+            download_count: asset.download_count,
+            content_type: asset.content_type,
+            browser_download_url: asset.browser_download_url,
+            created_at: asset.created_at,
+            updated_at: asset.updated_at,
+          })),
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  total: releases.length,
+                  page,
+                  releases,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "get_release": {
+        const { owner, repo, release_id, tag } = args as {
+          owner: string;
+          repo: string;
+          release_id?: number;
+          tag?: string;
+        };
+
+        let response;
+        if (release_id) {
+          response = await octokit.repos.getRelease({
+            owner,
+            repo,
+            release_id,
+          });
+        } else if (tag) {
+          response = await octokit.repos.getReleaseByTag({
+            owner,
+            repo,
+            tag,
+          });
+        } else {
+          throw new Error("Debe proporcionar release_id o tag");
+        }
+
+        const release = response.data;
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  id: release.id,
+                  tag_name: release.tag_name,
+                  name: release.name || release.tag_name,
+                  body: release.body || "",
+                  draft: release.draft,
+                  prerelease: release.prerelease,
+                  author: release.author?.login || null,
+                  created_at: release.created_at,
+                  published_at: release.published_at,
+                  html_url: release.html_url,
+                  tarball_url: release.tarball_url,
+                  zipball_url: release.zipball_url,
+                  assets: release.assets.map((asset) => ({
+                    id: asset.id,
+                    name: asset.name,
+                    size: asset.size,
+                    download_count: asset.download_count,
+                    content_type: asset.content_type,
+                    browser_download_url: asset.browser_download_url,
+                    created_at: asset.created_at,
+                    updated_at: asset.updated_at,
+                  })),
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "create_release": {
+        const {
+          owner,
+          repo,
+          tag_name,
+          name,
+          body,
+          draft = false,
+          prerelease = false,
+          target_commitish,
+        } = args as any;
+
+        const params: any = {
+          owner,
+          repo,
+          tag_name,
+          draft,
+          prerelease,
+        };
+
+        if (name) params.name = name;
+        if (body) params.body = body;
+        if (target_commitish) params.target_commitish = target_commitish;
+
+        const response = await octokit.repos.createRelease(params);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  id: response.data.id,
+                  tag_name: response.data.tag_name,
+                  name: response.data.name || response.data.tag_name,
+                  body: response.data.body || "",
+                  draft: response.data.draft,
+                  prerelease: response.data.prerelease,
+                  html_url: response.data.html_url,
+                  created_at: response.data.created_at,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "list_tags": {
+        const {
+          owner,
+          repo,
+          per_page = 30,
+          page = 1,
+        } = args as any;
+
+        const response = await octokit.repos.listTags({
+          owner,
+          repo,
+          per_page: Math.min(per_page, 100),
+          page,
+        });
+
+        const tags = response.data.map((tag) => ({
+          name: tag.name,
+          commit: {
+            sha: tag.commit.sha,
+            url: tag.commit.url,
+          },
+          zipball_url: tag.zipball_url,
+          tarball_url: tag.tarball_url,
+        }));
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  total: tags.length,
+                  page,
+                  tags,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+
+      case "create_tag": {
+        const {
+          owner,
+          repo,
+          tag,
+          message,
+          object,
+          type = "commit",
+        } = args as {
+          owner: string;
+          repo: string;
+          tag: string;
+          message: string;
+          object?: string;
+          type?: "commit" | "tree" | "blob";
+        };
+
+        // Primero necesitamos obtener el SHA del objeto si no se proporciona
+        let objectSha = object;
+        if (!objectSha) {
+          const refResponse = await octokit.git.getRef({
+            owner,
+            repo,
+            ref: "heads/main",
+          });
+          objectSha = refResponse.data.object.sha;
+        }
+
+        // Crear el tag usando la API de Git
+        const tagResponse = await octokit.git.createTag({
+          owner,
+          repo,
+          tag,
+          message,
+          object: objectSha,
+          type: type as "commit" | "tree" | "blob",
+        });
+
+        // Crear la referencia del tag
+        await octokit.git.createRef({
+          owner,
+          repo,
+          ref: `refs/tags/${tag}`,
+          sha: tagResponse.data.sha,
+        });
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  tag: tagResponse.data.tag,
+                  sha: tagResponse.data.sha,
+                  message: tagResponse.data.message,
+                  object: tagResponse.data.object.sha,
+                  object_type: tagResponse.data.object.type,
+                  url: tagResponse.data.url,
                 },
                 null,
                 2

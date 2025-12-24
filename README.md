@@ -44,6 +44,13 @@ Un servidor completo de Model Context Protocol (MCP) para interactuar con GitHub
 - ✅ **Listar commits** de un repositorio o branch con filtros avanzados
 - ✅ **Comparar commits o branches** y ver diferencias completas
 
+### Releases y Tags 🆕
+- ✅ **Listar releases** de un repositorio
+- ✅ **Obtener detalles de un release** específico
+- ✅ **Crear releases** (con soporte para drafts y prereleases)
+- ✅ **Listar tags** de un repositorio
+- ✅ **Crear tags** en commits específicos
+
 ### Usuario
 - ✅ **Obtener información del usuario** autenticado
 
@@ -593,6 +600,134 @@ Compara dos commits o branches y muestra las diferencias, estadísticas y archiv
 - Comparar dos branches: `base: "main"`, `head: "develop"`
 - Comparar dos commits: `base: "abc123"`, `head: "def456"`
 - Ver cambios de un PR: comparar base branch con head branch
+
+### `list_releases` 🆕
+Lista los releases de un repositorio.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `per_page` (opcional): número de resultados (default: 30)
+- `page` (opcional): número de página (default: 1)
+
+**Retorna:** Lista de releases con información completa incluyendo:
+- Tag name, nombre, descripción
+- Estado (draft, prerelease)
+- Autor y fechas
+- Assets adjuntos (archivos descargables)
+- URLs de descarga (tarball, zipball)
+
+**Ejemplo:**
+```json
+{
+  "name": "list_releases",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "per_page": 50
+  }
+}
+```
+
+### `get_release` 🆕
+Obtiene detalles de un release específico por ID o tag.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `release_id` (opcional): ID del release
+- `tag` (opcional): Tag del release (alternativa a release_id)
+
+**Nota:** Debe proporcionar `release_id` o `tag` (al menos uno).
+
+**Ejemplo:**
+```json
+{
+  "name": "get_release",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "tag": "v1.0.0"
+  }
+}
+```
+
+### `create_release` 🆕
+Crea un nuevo release en un repositorio.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `tag_name` (requerido): nombre del tag (ej: `"v1.0.0"`)
+- `name` (opcional): nombre del release (default: igual que tag_name)
+- `body` (opcional): descripción del release en Markdown
+- `draft` (opcional): si es `true`, crea el release como draft (default: `false`)
+- `prerelease` (opcional): si es `true`, marca como prerelease (default: `false`)
+- `target_commitish` (opcional): SHA o branch para el release (default: rama principal)
+
+**Ejemplo:**
+```json
+{
+  "name": "create_release",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "tag_name": "v1.0.0",
+    "name": "Release v1.0.0 - Gestión completa",
+    "body": "## Nuevas características\n\n- Gestión completa de PRs\n- Búsqueda avanzada\n- Gestión de commits",
+    "draft": false,
+    "prerelease": false
+  }
+}
+```
+
+### `list_tags` 🆕
+Lista los tags de un repositorio.
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `per_page` (opcional): número de resultados (default: 30)
+- `page` (opcional): número de página (default: 1)
+
+**Retorna:** Lista de tags con información del commit asociado.
+
+**Ejemplo:**
+```json
+{
+  "name": "list_tags",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "per_page": 50
+  }
+}
+```
+
+### `create_tag` 🆕
+Crea un tag en un repositorio (sin crear release).
+
+**Parámetros:**
+- `owner` (requerido): propietario del repositorio
+- `repo` (requerido): nombre del repositorio
+- `tag` (requerido): nombre del tag (ej: `"v1.0.0"`)
+- `message` (requerido): mensaje del tag
+- `object` (opcional): SHA del commit a taggear (default: HEAD de main)
+- `type` (opcional): tipo de objeto (`"commit"`, `"tree"`, `"blob"`, default: `"commit"`)
+
+**Ejemplo:**
+```json
+{
+  "name": "create_tag",
+  "arguments": {
+    "owner": "pblarismendi",
+    "repo": "mcp-github-server",
+    "tag": "v1.0.0",
+    "message": "Release version 1.0.0",
+    "object": "abc123def456"
+  }
+}
+```
 
 ### `get_file_content`
 Obtiene el contenido de un archivo o lista el contenido de un directorio.
