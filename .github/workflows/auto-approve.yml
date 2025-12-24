@@ -8,6 +8,10 @@ jobs:
   auto-approve:
     name: Auto-approve PRs from owner
     runs-on: ubuntu-latest
+    # Permisos necesarios para aprobar PRs
+    permissions:
+      contents: read
+      pull-requests: write
     # Solo ejecutar si el PR es del dueño del repositorio
     if: github.event.pull_request.user.login == github.repository_owner
     
