@@ -354,7 +354,7 @@
                 <h1>🐙 Servidor MCP para GitHub</h1>
                 <p>Documentación completa del servidor Model Context Protocol para GitHub</p>
                 <div style="margin-top: 20px;">
-                    <span class="badge">v1.0.1</span>
+                    <span class="badge">v1.0.2</span>
                     <span class="badge">Multiplataforma</span>
                     <span class="badge">80+ Herramientas</span>
                 </div>
@@ -384,6 +384,82 @@
                     <code># o con pnpm:</code><br>
                     <code>pnpm add -g mcp-github-server</code>
                 </div>
+            </div>
+
+            <div class="section">
+                <h2><i class="fas fa-cog"></i> Configuración del Servidor MCP</h2>
+                <p style="margin-bottom: 15px;">Configura el servidor en Cursor o Claude Desktop usando uno de estos métodos:</p>
+                
+                <h3><i class="fas fa-check-circle" style="color: #28a745;"></i> Método 1: Con npx (Recomendado)</h3>
+                <p style="margin-bottom: 10px; opacity: 0.8;">No requiere encontrar rutas absolutas ni instalación global. Funciona en todas las plataformas.</p>
+                
+                <h4>Cursor</h4>
+                <p style="margin-bottom: 5px; font-size: 0.9em; opacity: 0.7;">Ubicación: <code>~/.cursor/mcp.json</code> o <code>.cursor/mcp.json</code> en tu workspace</p>
+                <div class="code-block">
+                    <code>{</code><br>
+                    <code>  "mcpServers": {</code><br>
+                    <code>    "github": {</code><br>
+                    <code>      "command": "npx",</code><br>
+                    <code>      "args": ["-y", "mcp-github-server"],</code><br>
+                    <code>      "env": {</code><br>
+                    <code>        "GITHUB_TOKEN": "tu_token_aqui"</code><br>
+                    <code>      }</code><br>
+                    <code>    }</code><br>
+                    <code>  }</code><br>
+                    <code>}</code>
+                </div>
+
+                <h4>Claude Desktop</h4>
+                <p style="margin-bottom: 5px; font-size: 0.9em; opacity: 0.7;">
+                    <strong>Ubicación:</strong><br>
+                    • macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code><br>
+                    • Linux: <code>~/.config/Claude/claude_desktop_config.json</code><br>
+                    • Windows: <code>%APPDATA%\Claude\claude_desktop_config.json</code>
+                </p>
+                <div class="code-block">
+                    <code>{</code><br>
+                    <code>  "mcpServers": {</code><br>
+                    <code>    "github": {</code><br>
+                    <code>      "command": "npx",</code><br>
+                    <code>      "args": ["-y", "mcp-github-server"],</code><br>
+                    <code>      "env": {</code><br>
+                    <code>        "GITHUB_TOKEN": "tu_token_aqui"</code><br>
+                    <code>      }</code><br>
+                    <code>    }</code><br>
+                    <code>  }</code><br>
+                    <code>}</code>
+                </div>
+
+                <h3><i class="fas fa-info-circle" style="color: #17a2b8;"></i> Método 2: Con ruta absoluta</h3>
+                <p style="margin-bottom: 10px; opacity: 0.8;">Si prefieres usar una instalación global, usa la ruta absoluta al archivo:</p>
+                <div class="code-block">
+                    <code>{</code><br>
+                    <code>  "mcpServers": {</code><br>
+                    <code>    "github": {</code><br>
+                    <code>      "command": "node",</code><br>
+                    <code>      "args": ["RUTA_ABSOLUTA/dist/index.js"],</code><br>
+                    <code>      "env": {</code><br>
+                    <code>        "GITHUB_TOKEN": "tu_token_aqui"</code><br>
+                    <code>      }</code><br>
+                    <code>    }</code><br>
+                    <code>}</code>
+                </div>
+                <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.7;">
+                    <strong>Ejemplos de rutas:</strong><br>
+                    • macOS: <code>/Users/tu_usuario/.npm-global/lib/node_modules/mcp-github-server/dist/index.js</code><br>
+                    • Linux: <code>/usr/local/lib/node_modules/mcp-github-server/dist/index.js</code><br>
+                    • Windows: <code>C:\\Users\\tu_usuario\\AppData\\Roaming\\npm\\node_modules\\mcp-github-server\\dist\\index.js</code>
+                </p>
+
+                <h3><i class="fas fa-key"></i> Obtener un Personal Access Token</h3>
+                <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                    <li>Ve a <a href="https://github.com/settings/tokens" target="_blank" style="color: #667eea;">GitHub Settings > Developer settings > Personal access tokens</a></li>
+                    <li>Haz clic en "Generate new token (classic)"</li>
+                    <li>Dale un nombre descriptivo (ej: "MCP Server")</li>
+                    <li>Selecciona los scopes: <code>repo</code> (y opcionalmente <code>read:org</code>)</li>
+                    <li>Haz clic en "Generate token"</li>
+                    <li><strong>Copia el token inmediatamente</strong> (solo se muestra una vez)</li>
+                </ol>
             </div>
 
             <div class="section">
