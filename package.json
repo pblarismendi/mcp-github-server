@@ -1,11 +1,12 @@
 {
   "name": "mcp-github-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Servidor MCP completo para GitHub - Lista repositorios, issues, PRs y más. Compatible con macOS, Linux y Windows.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "mcp-github": "./dist/index.js"
+    "mcp-github": "./dist/index.js",
+    "mcp-github-server": "./dist/index.js"
   },
   "engines": {
     "node": ">=18.0.0"

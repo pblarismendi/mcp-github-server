@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "github": {
-      "command": "node",
-      "args": ["/Users/parismendi/Documents/mcp-github/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "mcp-github-server"],
       "env": {
         "GITHUB_TOKEN": "tu_token_aqui"
       }
